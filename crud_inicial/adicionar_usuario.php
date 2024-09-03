@@ -16,17 +16,25 @@ $usuario_result = inserir_dado("usuario", $colunas, $valores);
 if ($usuario_result['status'] === 'success') {
     $id_usuario = $usuario_result['insert_id'];
 
-    if ($tipo === 'aluno') {
-        $matricula = mysqli_real_escape_string($connection, $data['matricula']);
-        $id_curso = intval($data['id_curso']);
-        $colunas_aluno = "id_usuario, matricula, id_curso";
-        $valores_aluno = "$id_usuario, '$matricula', $id_curso";
-        inserir_dado("aluno", $colunas_aluno, $valores_aluno);
-    } elseif ($tipo === 'coordenador') {
-        $id_curso_responsavel = intval($data['id_curso_responsavel']);
-        $colunas_coordenador = "id_usuario, id_curso_responsavel";
-        $valores_coordenador = "$id_usuario, $id_curso_responsavel";
-        inserir_dado("coordenador", $colunas_coordenador, $valores_coordenador);
+    switch ($tipo) {
+        case 'aluno':
+            $matricula = mysqli_real_escape_string($connection, $data['matricula']);
+            $id_curso = intval($data['id_curso']);
+            $colunas_aluno = "id_usuario, matricula, id_curso";
+            $valores_aluno = "$id_usuario, '$matricula', $id_curso";
+            inserir_dado("aluno", $colunas_aluno, $valores_aluno);
+            break;
+        case 'coordenador':
+            $id_curso_responsavel = intval($data['id_curso_responsavel']);
+            $colunas_coordenador = "id_usuario, id_curso_responsavel";
+            $valores_coordenador = "$id_usuario, $id_curso_responsavel";
+            inserir_dado("coordenador", $colunas_coordenador, $valores_coordenador);
+            break;
+        case 'professor':
+            inserir_dado("professor", "id_usuario", $id_usuario);
+            break;
+        default:
+            break;
     }
 
     echo json_encode(['status' => 'success']);
