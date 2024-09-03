@@ -99,6 +99,7 @@ document.addEventListener("DOMContentLoaded", function () {
           if (data.status === "success") {
             alert("Usuário adicionado com sucesso!");
             document.querySelector("#adicionarUsuarioModal .btn-close").click();
+            carregarUsuarios();
           } else {
             alert("Erro ao adicionar usuário: " + data.message);
           }
