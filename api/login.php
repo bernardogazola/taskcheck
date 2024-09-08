@@ -1,6 +1,6 @@
 <?php
-include 'database.php';
-include 'functions.php';
+include '../database/database.php';
+include '../database/functions.php';
 
 function validarLogin() {
     global $connection;

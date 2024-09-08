@@ -1,48 +1,8 @@
 document.addEventListener("DOMContentLoaded", function () {
-  // CLICAR BOTÃO LISTAR USUARIOS - AQUI O CARD DA LISTA É EXIBIDO
-  document
-    .getElementById("listar-usuarios-btn")
-    .addEventListener("click", function () {
-      const userListContainer = document.getElementById("user-list-container");
-      userListContainer.style.display = "block";
-      carregarUsuarios();
-    });
+  // CARREGAR USUÁRIOS AO CARREGAR
+  carregarUsuarios();
 
-  // LOGIN
-  document
-    .getElementById("login-form")
-    .addEventListener("submit", function (event) {
-      event.preventDefault();
-
-      const email = document.getElementById("email").value;
-      const senha = document.getElementById("senha").value;
-
-      fetch("login.php", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email: email, senha: senha }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          const messageContainer = document.getElementById("response-message");
-
-          if (data.status === "success") {
-            messageContainer.innerHTML = `<p class="text-success">Login realizado com sucesso! Bem-vindo, ${data.user.nome} (${data.user.tipo})</p>`;
-          } else {
-            messageContainer.innerHTML = `<p class="text-danger">${data.message}</p>`;
-          }
-        })
-        .catch((error) => console.error("Erro:", error));
-    });
-
-  // CURSOS - MODAL ADICIONAR USUÁRIOS
-  document
-    .getElementById("adicionar-usuario-btn")
-    .addEventListener("click", carregarCursos);
-
-  // CAMPOS PARA CADA TIPO DE USER
+  // CAMPOS PARA CADA TIPO DE USER - MODAL ADICIONAR USUÁRIOS
   document.getElementById("tipo").addEventListener("change", function () {
     const tipoUsuario = this.value;
     const alunoFields = document.getElementById("aluno-fields");
@@ -58,7 +18,12 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // FORMULARIO ADICIONAR
+  // CARREGAR CURSOS - MODAL ADICIONAR USUÁRIOS
+  document
+    .getElementById("adicionar-usuario-btn")
+    .addEventListener("click", carregarCursos);
+
+  // ADICIONAR USUÁRIO
   document
     .getElementById("form-adicionar-usuario")
     .addEventListener("submit", function (event) {
@@ -87,7 +52,7 @@ document.addEventListener("DOMContentLoaded", function () {
         usuarioData.id_curso_responsavel = cursoCoordenador;
       }
 
-      fetch("./crud_inicial/adicionar_usuario.php", {
+      fetch("../api/userApi.php?action=add", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -109,7 +74,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-  // FORMULARIO ATUALIZAR
+  // ATUALIZAR USUÁRIO
   document
     .getElementById("form-atualizar-usuario")
     .addEventListener("submit", function (event) {
@@ -127,7 +92,7 @@ document.addEventListener("DOMContentLoaded", function () {
         senha: senha,
       };
 
-      fetch("./crud_inicial/atualizar_usuario.php", {
+      fetch("../api/userApi.php?action=update", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -150,31 +115,9 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
-// CARREGAR CURSOS + DROPDOWN
-function carregarCursos() {
-  fetch("./crud_inicial/obter_cursos.php")
-    .then((response) => response.json())
-    .then((cursos) => {
-      const cursoAlunoDropdown = document.getElementById("curso-aluno");
-      const cursoCoordenadorDropdown =
-        document.getElementById("curso-coordenador");
-      cursoAlunoDropdown.innerHTML = "";
-      cursoCoordenadorDropdown.innerHTML = "";
-
-      cursos.forEach((curso) => {
-        const option = document.createElement("option");
-        option.value = curso.id;
-        option.text = curso.nome;
-        cursoAlunoDropdown.add(option.cloneNode(true));
-        cursoCoordenadorDropdown.add(option);
-      });
-    })
-    .catch((error) => console.error("Erro ao carregar os cursos:", error));
-}
-
-// CARREGAR USUARIOS
+// CARREGAR USUÁRIOS
 function carregarUsuarios() {
-  fetch("./crud_inicial/listar_usuarios.php")
+  fetch("../api/userApi.php?action=list")
     .then((response) => response.json())
     .then((data) => {
       const tabelaBody = document.querySelector("#lista_usuarios tbody");
@@ -182,6 +125,22 @@ function carregarUsuarios() {
 
       data.forEach((usuario) => {
         const linha = document.createElement("tr");
+
+        const colunaNome = document.createElement("td");
+        colunaNome.textContent = usuario.nome;
+        linha.appendChild(colunaNome);
+
+        const colunaEmail = document.createElement("td");
+        colunaEmail.textContent = usuario.email;
+        linha.appendChild(colunaEmail);
+
+        const colunaSenha = document.createElement("td");
+        colunaSenha.textContent = usuario.senha;
+        linha.appendChild(colunaSenha);
+
+        const colunaTipo = document.createElement("td");
+        colunaTipo.textContent = usuario.tipo;
+        linha.appendChild(colunaTipo);
 
         const colunaAcao = document.createElement("td");
         colunaAcao.className = "d-flex justify-content-start";
@@ -204,22 +163,6 @@ function carregarUsuarios() {
         colunaAcao.appendChild(botaoAtualizar);
         linha.appendChild(colunaAcao);
 
-        const colunaNome = document.createElement("td");
-        colunaNome.textContent = usuario.nome;
-        linha.appendChild(colunaNome);
-
-        const colunaEmail = document.createElement("td");
-        colunaEmail.textContent = usuario.email;
-        linha.appendChild(colunaEmail);
-
-        const colunaSenha = document.createElement("td");
-        colunaSenha.textContent = usuario.senha;
-        linha.appendChild(colunaSenha);
-
-        const colunaTipo = document.createElement("td");
-        colunaTipo.textContent = usuario.tipo;
-        linha.appendChild(colunaTipo);
-
         tabelaBody.appendChild(linha);
       });
     })
@@ -229,7 +172,7 @@ function carregarUsuarios() {
 // EXCLUIR USUARIO
 function excluirUsuario(id) {
   if (confirm("Tem certeza que deseja excluir este usuário?")) {
-    fetch(`./crud_inicial/excluir_usuario.php?id=${id}`, { method: "GET" })
+    fetch(`../api/userApi.php?action=delete&id=${id}`, { method: "GET" })
       .then((response) => response.json())
       .then((data) => {
         if (data.status === "success") {
@@ -243,7 +186,7 @@ function excluirUsuario(id) {
   }
 }
 
-// ABRIR MODAL ATUALIZAR
+// ABRIR - MODAL ATUALIZAR USUARIO - COM OS DADOS DO USUÁRIO
 function abrirModalAtualizar(id, nome, email) {
   document.getElementById("atualizar-id-usuario").value = id;
   document.getElementById("atualizar-nome").value = nome;
@@ -253,4 +196,26 @@ function abrirModalAtualizar(id, nome, email) {
     document.getElementById("atualizarUsuarioModal")
   );
   atualizarUsuarioModal.show();
+}
+
+// CARREGAR CURSOS -> DROPDOWN
+function carregarCursos() {
+  fetch("../api/userApi.php?action=cursos")
+    .then((response) => response.json())
+    .then((cursos) => {
+      const cursoAlunoDropdown = document.getElementById("curso-aluno");
+      const cursoCoordenadorDropdown =
+        document.getElementById("curso-coordenador");
+      cursoAlunoDropdown.innerHTML = "";
+      cursoCoordenadorDropdown.innerHTML = "";
+
+      cursos.forEach((curso) => {
+        const option = document.createElement("option");
+        option.value = curso.id;
+        option.text = curso.nome;
+        cursoAlunoDropdown.add(option.cloneNode(true));
+        cursoCoordenadorDropdown.add(option);
+      });
+    })
+    .catch((error) => console.error("Erro ao carregar os cursos:", error));
 }
