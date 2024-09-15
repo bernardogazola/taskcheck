@@ -1,0 +1,53 @@
+body {
+font-family: "Montserrat", sans-serif;
+background-color: #f4f4f4;
+padding-top: 60px;
+}
+
+.header {
+background-color: #8a0538;
+color: white;
+top: 0;
+left: 0;
+right: 0;
+z-index: 1030;
+}
+
+.sidebar {
+background-color: white;
+padding: 20px;
+color: #333;
+border-right: 1px solid #ddd;
+left: 0;
+top: 60px;
+bottom: 0;
+transition: transform 0.3s ease;
+z-index: 1020;
+}
+
+.sidebar a {
+color: #333;
+text-decoration: none;
+font-size: 18px;
+display: block;
+margin-bottom: 20px;
+}
+
+.content {
+padding: 40px;
+margin-left: 220px;
+transition: margin-left 0.3s ease;
+}
+
+input[type="text"],
+select,
+textarea,
+input[type="file"] {
+border: solid 1px #8e8e8e8b;
+border-radius: 9999px;
+}
+
+.btn-primary {
+background-color: #7a003c;
+border: none;
+}

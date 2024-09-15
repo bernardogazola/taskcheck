@@ -1,4 +1,5 @@
 <?php
+global $connection;
 include '../database/database.php';
 include '../database/functions.php';
 

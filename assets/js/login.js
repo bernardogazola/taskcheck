@@ -18,10 +18,16 @@ document.addEventListener("DOMContentLoaded", function () {
         .then((data) => {
           const messageContainer = document.getElementById("response-message");
 
-          if (data.status === "success") {
-            messageContainer.innerHTML = `<p class="text-success">Login realizado com sucesso! Bem-vindo, ${data.user.nome} (${data.user.tipo})</p>`;
+          if (data.status === "success" && data.user) {
+            if (data.user.tipo === "aluno") {
+              window.location.href = "./pages/dashboard_aluno.html";
+            } else if (data.user.tipo === "professor") {
+              window.location.href = "ainda não fiz";
+            } else if (data.user.tipo === "coordenador") {
+              window.location.href = "ainda não fiz";
+            }
           } else {
-            messageContainer.innerHTML = `<p class="text-danger">${data.message}</p>`;
+            messageContainer.innerHTML = `<p class="text-danger">${data.message || "Erro no login"}</p>`;
           }
         })
         .catch((error) => console.error("Erro:", error));

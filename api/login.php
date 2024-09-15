@@ -1,4 +1,8 @@
 <?php
+
+session_start();
+
+global $connection;
 include '../database/database.php';
 include '../database/functions.php';
 
@@ -20,6 +24,12 @@ function validarLogin() {
 
             if (is_array($result) && count($result) > 0) {
                 $user = $result[0];
+
+                $_SESSION['id_usuario'] = $user['id'];
+                $_SESSION['nome'] = $user['nome'];
+                $_SESSION['email'] = $user['email'];
+                $_SESSION['tipo'] = $user['tipo'];
+
                 json_return(["status" => "success", "user" => $user]);
             } else {
                 json_return(["status" => "error", "message" => "Email ou senha incorretos."]);

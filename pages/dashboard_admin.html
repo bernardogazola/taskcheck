@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -16,31 +16,19 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css"
     />
-    <style>
-      body {
-        font-family: "Montserrat", sans-serif;
-        background-color: #f8f9fa;
-      }
-    </style>
+    <link rel="stylesheet" href="../assets/css/dashboard_admin.css" />
   </head>
   <body>
-    <div
-      class="header"
-      style="background-color: #8a0538; color: white; padding: 10px 20px"
-    >
+    <div class="header">
       <h1 style="margin: 0; font-size: 24px">TaskCheck - Administrador</h1>
     </div>
 
     <div class="container" style="margin-top: 30px">
-      <div
-        class="d-flex justify-content-between align-items-center mb-3"
-        style="margin-top: 30px"
-      >
+      <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 style="margin: 0">Gerenciamento de Usuários</h2>
         <button
           id="adicionar-usuario-btn"
           class="btn btn-add-user"
-          style="background-color: #8a0538; color: white"
           data-bs-toggle="modal"
           data-bs-target="#adicionarUsuarioModal"
         >
@@ -48,11 +36,7 @@
         </button>
       </div>
 
-      <div
-        id="user-list-container"
-        class="card shadow-lg p-4 mx-auto"
-        style="max-width: 1500px; border-radius: 24px"
-      >
+      <div id="user-list-container" class="card shadow-lg p-4 mx-auto">
         <div class="table-responsive">
           <table id="lista_usuarios" class="table table-hover">
             <thead>
@@ -132,7 +116,7 @@
                 />
               </div>
               <!-- CAMPOS ALUNO -->
-              <div id="aluno-fields" style="display: none">
+              <div id="aluno-fields">
                 <div class="mb-3">
                   <label for="matricula" class="form-label">Matrícula</label>
                   <input type="text" class="form-control" id="matricula" />
@@ -145,7 +129,7 @@
                 </div>
               </div>
               <!-- CAMPOS COORDENADOR -->
-              <div id="coordenador-fields" style="display: none">
+              <div id="coordenador-fields">
                 <div class="mb-3">
                   <label for="curso-coordenador" class="form-label"
                     >Curso Responsável</label
