@@ -1,3 +1,20 @@
+<?php
+session_start();
+
+if (isset($_SESSION['id_usuario'])) {
+    if ($_SESSION['tipo'] === 'aluno') {
+        header("Location: ./pages/dashboard_aluno.php");
+        exit();
+    } elseif ($_SESSION['tipo'] === 'professor') {
+        header("Location: NÃO FIZ");
+        exit();
+    } elseif ($_SESSION['tipo'] === 'coordenador') {
+        header("Location: NÃO FIZ");
+        exit();
+    }
+}
+?>
+
 <!doctype html>
 <html lang="pt-BR">
   <head>
