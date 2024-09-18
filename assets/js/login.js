@@ -20,11 +20,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
           if (data.status === "success" && data.user) {
             if (data.user.tipo === "aluno") {
-              window.location.href = "./pages/dashboard_aluno.php";
+              window.location.href = "/aluno";
             } else if (data.user.tipo === "professor") {
               window.location.href = "ainda não fiz";
             } else if (data.user.tipo === "coordenador") {
-              window.location.href = "ainda não fiz";
+              window.location.href = "/coordenador";
             }
           } else {
             messageContainer.innerHTML = `<p class="text-danger">${data.message || "Erro no login"}</p>`;

@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS `taskcheck`.`relatorio_atividade` (
   `data_realizacao` DATE NOT NULL,
   `data_envio` DATE NOT NULL,
   `status` ENUM('Aguardando validacao', 'Invalido', 'Valido') NOT NULL,
-  `horas_validadas` INT NOT NULL,
+  `horas_validadas` INT,
   `certificado` BLOB NOT NULL,
   `id_aluno` INT NOT NULL,
   `id_categoria` INT NOT NULL,
