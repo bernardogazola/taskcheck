@@ -24,6 +24,19 @@ input[type="password"] {
     border-radius: 9999px;
 }
 
+/*OLHO DA SENHA*/
+.input-group .form-control {
+    border: solid 1px #8e8e8e8b;
+    border-radius: 9999px;
+}
+
+.input-group .input-group-text {
+    background-color: white;
+    border-left: none;
+    border-radius: 0 9999px 9999px 0;
+    cursor: pointer;
+}
+
 .btn-primary {
     background-color: #8a0538;
     border: none;

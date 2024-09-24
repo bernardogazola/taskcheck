@@ -1,8 +1,7 @@
 <?php
 session_start();
 
-// LEMBRAR DE ADICIONAR VERIFICAÇÃO DO RESPECTIVO TIPO DE USUARIO DA SESSION
-if (!isset($_SESSION['id_usuario'])) {
+if (!isset($_SESSION['id_usuario']) || $_SESSION['tipo'] != 'aluno') {
     header("Location: /");
     exit();
 }

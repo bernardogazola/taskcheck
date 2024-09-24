@@ -32,4 +32,21 @@ document.addEventListener("DOMContentLoaded", function () {
         })
         .catch((error) => console.error("Erro:", error));
     });
+
+    const togglePassword = document.getElementById('toggle-password');
+    const passwordInput = document.getElementById('senha');
+    const eyeIcon = document.getElementById('eye-icon');
+
+    togglePassword.addEventListener('click', function (e) {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+
+        if (type === 'text') {
+            eyeIcon.classList.remove('fa-eye');
+            eyeIcon.classList.add('fa-eye-slash');
+        } else {
+            eyeIcon.classList.remove('fa-eye-slash');
+            eyeIcon.classList.add('fa-eye');
+        }
+    });
 });

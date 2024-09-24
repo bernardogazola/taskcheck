@@ -16,26 +16,7 @@ if (isset($_SESSION['id_usuario'])) {
 }
 ?>
 
-<!doctype html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>TaskCheck - Login</title>
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-    />
-    <link
-        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap"
-        rel="stylesheet"
-    />
-    <link rel="stylesheet" href="../assets/css/index.css"/>
-</head>
-
-<body
-    class="bg-light d-flex flex-column justify-content-center align-items-center vh-100"
->
+<?php require 'partials/head.php' ?>
 <div class="container">
     <div class="card shadow-lg p-4 mx-auto mb-4" style="max-width: 450px">
         <div class="text-center">
@@ -58,12 +39,17 @@ if (isset($_SESSION['id_usuario'])) {
             </div>
             <div class="mb-4">
                 <label for="senha" class="form-label">Senha</label>
-                <input
-                    type="password"
-                    class="form-control"
-                    id="senha"
-                    placeholder="Informe sua senha"
-                />
+                <div class="input-group">
+                    <input
+                            type="password"
+                            class="form-control"
+                            id="senha"
+                            placeholder="Informe sua senha"
+                    />
+                    <span class="input-group-text" id="toggle-password">
+                        <i class="fas fa-eye" id="eye-icon"></i>
+                    </span>
+                </div>
             </div>
             <button type="submit" class="btn btn-primary w-100 mb-2">
                 Entrar
@@ -72,7 +58,4 @@ if (isset($_SESSION['id_usuario'])) {
         <div id="response-message" class="mt-3"></div>
     </div>
 </div>
-<script src="../assets/js/login.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<?php require 'partials/footer.php' ?>
