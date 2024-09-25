@@ -18,4 +18,4 @@
     />
     <link rel="stylesheet" href="../assets/css/<?= $nomeCSS ?>.css" />
 </head>
-<body class="<?= urlIs('/') ? 'bg-light d-flex flex-column justify-content-center align-items-center vh-100' : ''?>">
+<body class="<?= urlIs('/') || isAbort() ? 'bg-light d-flex flex-column justify-content-center align-items-center vh-100' : ''?>">

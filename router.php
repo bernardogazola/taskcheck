@@ -17,9 +17,10 @@ function routerToController($uri, $routes) {
     }
 }
 
-// LEMBRAR FINALIZAR ABORT - CHAMAR http_response_code(404) E CRIAR VIEW ADEQUADA
-function abort() {
-    echo "teste";
+function abort($code = 404) {
+    http_response_code($code);
+    require "views/{$code}.view.php";
+    die;
 }
 
 routerToController($uri, $routes);

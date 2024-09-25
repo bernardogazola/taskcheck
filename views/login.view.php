@@ -1,17 +1,17 @@
 <?php
-
 session_start();
 
 if (isset($_SESSION['id_usuario'])) {
-    if ($_SESSION['tipo'] === 'aluno') {
-        header("Location: /aluno");
-        exit();
-    } elseif ($_SESSION['tipo'] === 'professor') {
-        header("Location: NÃO FIZ");
-        exit();
-    } elseif ($_SESSION['tipo'] === 'coordenador') {
-        header("Location: /coordenador");
-        exit();
+    switch ($_SESSION['tipo']) {
+        case 'aluno':
+            header("Location: /aluno");
+            exit();
+        case 'professor':
+            header("Location: NÃO FIZ");
+            exit();
+        case 'coordenador':
+            header("Location: /coordenador");
+            exit();
     }
 }
 ?>
