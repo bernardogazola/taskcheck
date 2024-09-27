@@ -19,22 +19,15 @@ body {
 }
 
 input[type="email"],
-input[type="password"] {
+input[type="password"],
+input[type="text"] {
     border: solid 1px #8e8e8e8b;
     border-radius: 9999px;
 }
 
-/*OLHO DA SENHA*/
-.input-group .form-control {
-    border: solid 1px #8e8e8e8b;
-    border-radius: 9999px;
-}
-
-.input-group .input-group-text {
-    background-color: white;
-    border-left: none;
-    border-radius: 0 9999px 9999px 0;
-    cursor: pointer;
+.position-relative .position-absolute {
+    font-size: 1.2rem;
+    color: #6c757d;
 }
 
 .btn-primary {

@@ -31,7 +31,7 @@ if (!isset($_SESSION['id_usuario']) || $_SESSION['tipo'] != 'coordenador') {
                     <div class="d-flex align-items-center">
                         <input type="range" class="form-range flex-grow-1" id="carga-horaria" min="0" max="100">
                         <div class="input-group ms-3" style="max-width: 150px;">
-                            <input type="text" class="form-control" id="horas" placeholder="Horas">
+                            <input type="text" class="form-control" id="horas" placeholder="00">
                             <span class="input-group-text">Horas</span>
                         </div>
                     </div>

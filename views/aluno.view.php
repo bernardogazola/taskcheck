@@ -22,6 +22,7 @@ if (!isset($_SESSION['id_usuario']) || $_SESSION['tipo'] != 'aluno') {
                                 class="form-control"
                                 id="data"
                                 placeholder="DD/MM/AAAA"
+                                pattern="\d{2}/\d{2}/\d{4}"
                         />
                     </div>
                     <div class="col-md-6">

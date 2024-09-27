@@ -21,35 +21,33 @@ if (isset($_SESSION['id_usuario'])) {
     <div class="card shadow-lg p-4 mx-auto mb-4" style="max-width: 450px">
         <div class="text-center">
             <img
-                src="../assets/img/logo_pucpr.png"
-                alt="PUCPR Grupo Marista"
-                class="mt-3 mb-4 w-100"
+                    src="../assets/img/logo_pucpr.png"
+                    alt="PUCPR Grupo Marista"
+                    class="mt-3 mb-4 w-100"
             />
             <h2 class="mb-4">TaskCheck</h2>
         </div>
         <form id="login-form">
-            <div class="mb-3">
-                <label for="email" class="form-label">E-mail</label>
+            <div class="form-floating mb-3">
                 <input
-                    type="email"
-                    class="form-control"
-                    id="email"
-                    placeholder="Informe seu e-mail"
+                        type="email"
+                        class="form-control"
+                        id="email"
+                        placeholder="Informe seu e-mail"
                 />
+                <label for="email">E-mail</label>
             </div>
-            <div class="mb-4">
-                <label for="senha" class="form-label">Senha</label>
-                <div class="input-group">
-                    <input
-                            type="password"
-                            class="form-control"
-                            id="senha"
-                            placeholder="Informe sua senha"
-                    />
-                    <span class="input-group-text" id="toggle-password">
-                        <i class="fas fa-eye" id="eye-icon"></i>
-                    </span>
-                </div>
+            <div class="form-floating mb-4 position-relative">
+                <input
+                        type="password"
+                        class="form-control"
+                        id="senha"
+                        placeholder="Informe sua senha"
+                />
+                <label for="senha">Senha</label>
+                <span class="position-absolute top-50 end-0 translate-middle-y me-3" id="toggle-password" style="cursor: pointer;">
+                    <i class="fas fa-eye" id="eye-icon"></i>
+                </span>
             </div>
             <button type="submit" class="btn btn-primary w-100 mb-2">
                 Entrar
