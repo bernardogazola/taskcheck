@@ -20,7 +20,20 @@ if ($method === "POST") {
     $data = json_decode(file_get_contents("php://input"), true);
 
     switch ($action) {
-        // ADD,UPDATE FAZER DEPOIS
+        case 'add':
+            if (isset($data['nome'], $data['carga_horaria'], $data['descricao'])) {
+                adicionarCategoria($data);
+            } else {
+                json_return(["status" => "error", "message" => "Dados incompletos."]);
+            }
+            break;
+        case 'update':
+            if (isset($data['id'], $data['nome'], $data['carga_horaria'], $data['descricao'])) {
+                atualizarCategoria($data);
+            } else {
+                json_return(["status" => "error", "message" => "Dados incompletos."]);
+            }
+            break;
         default:
             json_return(["status" => "error", "message" => "Ação não encontrada."]);
             break;
@@ -30,6 +43,20 @@ if ($method === "POST") {
         case 'list':
             obterCategorias($id_usuario, $tipo_usuario);
             break;
+        case 'get':
+            if (isset($_GET['id'])) {
+                obterCategoria($_GET['id']);
+            } else {
+                json_return(["status" => "error", "message" => "ID da categoria não fornecido."]);
+            }
+            break;
+        case 'delete':
+            if (isset($_GET['id'])) {
+                excluirCategoria($_GET['id']);
+            } else {
+                json_return(["status" => "error", "message" => "ID da categoria não fornecido."]);
+            }
+            break;
         default:
             json_return(["status" => "error", "message" => "Ação não encontrada."]);
             break;
@@ -38,9 +65,101 @@ if ($method === "POST") {
     json_return(["status" => "error", "message" => "Método não suportado"]);
 }
 
-// CONSULTAR CURSO DO ALUNO E DEPOIS CONSULTAR AS CATEGORIAS ASSOCIADAS AO CURSO
-// OBSERVAÇÃO: QUANDO IMPLEMENTAR O COORDENADOR, DEVERÁ OCORRER O MESMO
+// ADICIONAR CATEGORIA
+function adicionarCategoria($dados) {
+    global $connection;
+    $id_coordenador = $_SESSION['id_usuario'];
+
+    $nome = mysqli_real_escape_string($connection, $dados['nome']);
+    $carga_horaria = intval($dados['carga_horaria']);
+    $descricao = mysqli_real_escape_string($connection, $dados['descricao']);
+
+    // CURSO DO COORDENADOR
+    $queryCurso = "SELECT id_curso_responsavel FROM coordenador WHERE id_usuario = $id_coordenador";
+    $cursoResult = consultar_dado($queryCurso);
+
+    if (is_array($cursoResult) && count($cursoResult) > 0) {
+        $id_curso = $cursoResult[0]['id_curso_responsavel'];
+
+        $colunas = "nome, carga_horaria, descricao, id_curso, id_coordenador";
+        $valores = "'$nome', $carga_horaria, '$descricao', $id_curso, $id_coordenador";
+
+        $resultado = inserir_dado("categoria", $colunas, $valores);
+
+        if ($resultado['status'] === 'success') {
+            json_return(["status" => "success", "message" => "Categoria adicionada com sucesso"]);
+        } else {
+            json_return(["status" => "error", "message" => "Erro ao adicionar categoria: " . $resultado['message']]);
+        }
+    } else {
+        json_return(["status" => "error", "message" => "Curso não encontrado para o coordenador."]);
+    }
+}
+
+// OBTER UMA CATEGORIA ESPECÍFICA
+function obterCategoria($id_categoria) {
+    $query = "SELECT id, nome, carga_horaria, descricao FROM categoria WHERE id = $id_categoria";
+    $categoria = consultar_dado($query);
+
+    if (is_array($categoria) && count($categoria) > 0) {
+        json_return($categoria[0]);
+    } else {
+        json_return(["status" => "error", "message" => "Categoria não encontrada."]);
+    }
+}
+
+// EXCLUIR CATEGORIAS E ATUALIZAR ATIVIDADES ASSOCIADAS
+function excluirCategoria($id_categoria) {
+    global $connection;
+
+    // REMOVER REFERÊNCIA DA CATEGORIA
+    $atributosAtividades = "id_categoria = NULL, status = 'Recategorizacao', horas_validadas = NULL";
+    $condicaoAtividades = "id_categoria = $id_categoria";
+
+    $resultadoAtualizarAtividades = atualizar_dado("relatorio_atividade", $atributosAtividades, $condicaoAtividades);
+
+    if ($resultadoAtualizarAtividades['status'] !== 'success') {
+        json_return(["status" => "error", "message" => "Erro ao atualizar atividades associadas: " . $resultadoAtualizarAtividades['message']]);
+    }
+
+    // FEEDBACK RECATEGORIZACAO
+    $feedbackText = "Atividade pendente de recategorização";
+
+    // CRIA OS VALORES DO INSERT
+    $queryInsertFeedback = "
+        SELECT id
+        FROM relatorio_atividade
+        WHERE id_categoria IS NULL
+    ";
+    $atividadesRecategorizadas = consultar_dado($queryInsertFeedback);
+
+    if (count($atividadesRecategorizadas) > 0) {
+        foreach ($atividadesRecategorizadas as $atividade) {
+            $colunasFeedback = "texto_feedback, id_relatorio, data_envio, id_professor";
+            $valoresFeedback = "'$feedbackText', {$atividade['id']}, NOW(), NULL";
+
+            $resultadoInsertFeedback = inserir_dado("feedback", $colunasFeedback, $valoresFeedback);
+
+            if ($resultadoInsertFeedback['status'] !== 'success') {
+                json_return(["status" => "error", "message" => "Erro ao adicionar feedback às atividades recategorizadas: " . $resultadoInsertFeedback['message']]);
+            }
+        }
+    }
+
+    // EXCLUIR CATEGORIA
+    $resultadoExcluirCategoria = deletar_dado("categoria", "id = $id_categoria");
+
+    if ($resultadoExcluirCategoria['status'] === 'success') {
+        json_return(["status" => "success", "message" => "Categoria excluída com sucesso e atividades marcadas para recategorização."]);
+    } else {
+        json_return(["status" => "error", "message" => $resultadoExcluirCategoria['message']]);
+    }
+}
+
+// OBTER CATEGORIAS - ALUNO OU COORDENADOR
 function obterCategorias($id_usuario, $tipo_usuario) {
+    global $connection;
+
     if ($tipo_usuario === 'aluno') {
         $queryCurso = "SELECT id_curso FROM aluno WHERE id_usuario = $id_usuario";
         $cursoResult = consultar_dado($queryCurso);
@@ -48,15 +167,49 @@ function obterCategorias($id_usuario, $tipo_usuario) {
         if (is_array($cursoResult) && count($cursoResult) > 0) {
             $id_curso = $cursoResult[0]['id_curso'];
 
-            $queryCategorias = "SELECT id, nome, descricao, carga_horaria FROM categoria WHERE id_curso = $id_curso";
+            $queryCategorias = "SELECT id, nome, carga_horaria FROM categoria WHERE id_curso = $id_curso";
             $categorias = consultar_dado($queryCategorias);
 
             json_return($categorias);
         } else {
             json_return(["status" => "error", "message" => "Curso do aluno não encontrado."]);
         }
+    } elseif ($tipo_usuario === 'coordenador') {
+        $queryCursoCoordenador = "SELECT id_curso_responsavel FROM coordenador WHERE id_usuario = $id_usuario";
+        $cursoResult = consultar_dado($queryCursoCoordenador);
+
+        if (is_array($cursoResult) && count($cursoResult) > 0) {
+            $id_curso = $cursoResult[0]['id_curso_responsavel'];
+
+            $queryCategorias = "SELECT id, nome, carga_horaria FROM categoria WHERE id_curso = $id_curso";
+            $categorias = consultar_dado($queryCategorias);
+
+            json_return($categorias);
+        } else {
+            json_return(["status" => "error", "message" => "Curso não encontrado para o coordenador."]);
+        }
     } else {
-        json_return(["status" => "error", "message" => "Tipo de usuário não suportado para esta ação."]);
+        json_return(["status" => "error", "message" => "Usuário não autorizado."]);
+    }
+}
+
+function atualizarCategoria($dados) {
+    global $connection;
+
+    $id_categoria = intval($dados['id']);
+    $nome = mysqli_real_escape_string($connection, $dados['nome']);
+    $carga_horaria = intval($dados['carga_horaria']);
+    $descricao = mysqli_real_escape_string($connection, $dados['descricao']);
+
+    $atributos = "nome = '$nome', carga_horaria = $carga_horaria, descricao = '$descricao'";
+    $condicao = "id = $id_categoria";
+
+    $resultado = atualizar_dado('categoria', $atributos, $condicao);
+
+    if ($resultado['status'] === 'success') {
+        json_return(["status" => "success", "message" => "Categoria atualizada com sucesso"]);
+    } else {
+        json_return(["status" => "error", "message" => "Erro ao atualizar categoria: " . $resultado['message']]);
     }
 }
 ?>

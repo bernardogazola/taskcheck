@@ -110,7 +110,7 @@ function listarAtividadesEnviadas($id_usuario) {
             r.data_realizacao,
             r.status
         FROM relatorio_atividade r
-        INNER JOIN categoria c ON r.id_categoria = c.id
+        LEFT JOIN categoria c ON r.id_categoria = c.id
         WHERE r.id_aluno = $id_usuario
         ORDER BY r.data_envio DESC
     ";
@@ -133,16 +133,25 @@ function atualizarAtividade($dados) {
     $id_categoria = mysqli_real_escape_string($connection, $dados['id_categoria']);
     $texto_reflexao = mysqli_real_escape_string($connection, $dados['texto_reflexao']);
 
-    // FORMATAR DD/MM/AAAA PARA AAAA-MM-DD ------ LEMBRAR DE ADICIONAR POSTERIORMENTE
-    //$data_realizacao_formatada = date_format(date_create_from_format('d/m/Y', $data_realizacao), 'Y-m-d');
+    // SE A ATIVIDADE ESTIVER EM "RECATEGORIZACAO" ATUALIZA PARA AGUARDANDO VALIDACAO
+    $status = "Aguardando validacao";
+    if ($dados['status'] === "Recategorizacao") {
+        $status = "Aguardando validacao";
+    }
 
-    $atributos = "nome = '$nome', data_realizacao = '$data_realizacao', id_categoria = $id_categoria, texto_reflexao = '$texto_reflexao'";
+    $atributos = "
+        nome = '$nome', 
+        data_realizacao = '$data_realizacao', 
+        id_categoria = $id_categoria, 
+        texto_reflexao = '$texto_reflexao', 
+        status = '$status'
+    ";
     $condicao = "id = $id_relatorio";
 
     $resultado = atualizar_dado('relatorio_atividade', $atributos, $condicao);
 
     if ($resultado['status'] === 'success') {
-        json_return(["status" => "success", "message" => "Atividade atualizada com sucesso"]);
+        json_return(["status" => "success", "message" => "Atividade atualizada com sucesso e status alterado para 'Aguardando validação'."]);
     } else {
         json_return(["status" => "error", "message" => "Erro ao atualizar a atividade: " . $resultado['message']]);
     }

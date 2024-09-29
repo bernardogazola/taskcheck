@@ -153,7 +153,7 @@ document.addEventListener("DOMContentLoaded", function () {
             divAcoes.classList.add("d-flex");
 
             // BTN EDITAR
-            if (atividade.status === "Aguardando validacao" || atividade.status === "Invalido") {
+            if (atividade.status === "Aguardando validacao" || atividade.status === "Invalido" || atividade.status === "Recategorizacao") {
                 const botaoEditar = document.createElement("button");
                 botaoEditar.classList.add("btn", "btn-sm", "btn-primary", "me-2");
                 botaoEditar.textContent = "Editar";
@@ -162,7 +162,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             // BTN FEEDBACK
-            if (atividade.status === "Invalido") {
+            if (atividade.status === "Invalido" || atividade.status === "Recategorizacao") {
                 const botaoFeedback = document.createElement("button");
                 botaoFeedback.classList.add("btn", "btn-sm", "btn-danger");
                 botaoFeedback.textContent = "Feedback";
@@ -208,12 +208,16 @@ document.addEventListener("DOMContentLoaded", function () {
         const id_categoria = document.getElementById('edit-categoria').value;
         const texto_reflexao = document.getElementById('edit-descricao').value;
 
+        // SE A ATIVIDADE ESTIVER SENDO RECATEGORIZADA, ATUALIZA PARA AGUARDANDO VALIDACAO
+        const status = "Aguardando validacao";
+
         const formData = new FormData();
         formData.append('id_relatorio', id_relatorio);
         formData.append('nome', nome);
         formData.append('data_realizacao', data_realizacao);
         formData.append('id_categoria', id_categoria);
         formData.append('texto_reflexao', texto_reflexao);
+        formData.append('status', status);
 
         fetch('../api/reportApi.php?action=update', {
             method: 'POST',

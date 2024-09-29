@@ -95,3 +95,10 @@ button:hover {
     background-color: #f8f9fa;
     border-color: #ced4da;
 }
+
+#categories-card {
+    display: none;
+}
+.table-hover th, .table-hover td {
+    vertical-align: middle;
+}
