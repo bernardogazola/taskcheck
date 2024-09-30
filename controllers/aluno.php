@@ -1,7 +1,7 @@
 <?php
 
 $sideBar1 = 'Adicionar atividade';
-$sideBar2 = 'Atividades enviadas';  // LEMBRAR DE MUDAR PARA "SUBMETIDAS" (ARRUMAR BS E CSS)
+$sideBar2 = 'Atividades submetidas';
 $sideBar3 = 'Configurações';
 $sideBar1id = 'add-activity';
 $sideBar2id = 'view-sent-activities';

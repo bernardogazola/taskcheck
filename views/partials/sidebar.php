@@ -5,4 +5,11 @@
     <a href="" id="logout-btn">
         <i class="fas fa-sign-out-alt"></i> Logout
     </a>
+    <a id="user-info" class="d-flex align-items-center mt-auto" href="">
+        <i class="fas fa-user"></i>
+        <span class="ms-2"><?= $_SESSION['nome']; ?></span>
+        <div id="user-info-tooltip">
+            Tipo: <?= $_SESSION['tipo']; ?>
+        </div>
+    </a>
 </div>

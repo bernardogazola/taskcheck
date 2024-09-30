@@ -1,70 +1,88 @@
-document.addEventListener("DOMContentLoaded", function () {
-    const toggleSidebarButton = document.getElementById("toggleSidebar");
-    const sidebar = document.getElementById("sidebar");
-    const content = document.getElementById("content");
-    const addActivityButton = document.getElementById("add-activity");
-    const viewSentActivitiesButton = document.getElementById("view-sent-activities");
+document.addEventListener("DOMContentLoaded", () => {
+    const elements = {
+        toggleSidebarButton: document.getElementById("toggleSidebar"),
+        sidebar: document.getElementById("sidebar"),
+        content: document.getElementById("content"),
+        addActivityButton: document.getElementById("add-activity"),
+        viewSentActivitiesButton: document.getElementById("view-sent-activities"),
+        activityForm: document.getElementById('activity-form'),
+        sentActivitiesCard: document.getElementById('sent-activities-card'),
+        tabelaBody: document.querySelector(".table tbody"),
+        addActivityForm: document.querySelector('#activity-form form'),
+        editActivityForm: document.getElementById("edit-activity-form"),
+        messageContainer: document.getElementById('response-message'),
+        logoutButton: document.getElementById("logout-btn")
+    };
 
-    const activityForm = document.getElementById('activity-form');
-    const sentActivitiesCard = document.getElementById('sent-activities-card');
+    // INICIALIZA EVENTOS AO CARREGAR A PÁGINA
+    init();
 
-    // BTN MOSTRAR/ESCONDER SIDEBAR
-    toggleSidebarButton.addEventListener("click", () => {
-        sidebar.classList.toggle("hidden");
-        content.classList.toggle("sidebar-hidden");
-    });
+    // CONFIG DOS EVENTOS
+    function init() {
+        // CONFIGURAÇÃO DOS BOTÕES PRINCIPAIS
+        elements.toggleSidebarButton.addEventListener("click", toggleSidebar);
+        elements.addActivityButton.addEventListener("click", mostrarFormularioAtividade);
+        elements.viewSentActivitiesButton.addEventListener("click", mostrarCardAtividadesEnviadas);
 
-    // BTN ADICIONAR ATIVIDADE
-    addActivityButton.addEventListener("click", (event) => {
-        event.preventDefault();
-        mostrarFormularioAtividade();
-        carregarCategorias();
-    });
+        // SUBMISSÃO DO FORMULÁRIO - ADICIONAR ATIVIDADE E EDICAO ATIVIDADE
+        elements.addActivityForm.addEventListener("submit", adicionarAtividade);
+        elements.editActivityForm.addEventListener("submit", salvarEdicaoAtividade);
 
-    // BTN ATIVIDADES ENVIADAS
-    viewSentActivitiesButton.addEventListener("click", (event) => {
-        event.preventDefault();
-        mostrarCardAtividadesEnviadas();
+        // LOGOUT
+        elements.logoutButton.addEventListener("click", logout);
+
+        // CARREGAR ATIVIDADES ENVIADAS AO INICIAR
         carregarAtividadesEnviadas();
-    });
-
-    // MOSTRAR FORMULÁRIO - RELATÓRIO ATIVIDADE
-    function mostrarFormularioAtividade() {
-        activityForm.style.display = 'block';
-        sentActivitiesCard.style.display = 'none';
     }
 
-    // MOSTRAR ATIVIDADES ENVIADAS
-    function mostrarCardAtividadesEnviadas() {
-        activityForm.style.display = 'none';
-        sentActivitiesCard.style.display = 'block';
+    // MOSTRAR/ESCONDER SIDEBAR
+    function toggleSidebar() {
+        elements.sidebar.classList.toggle("hidden");
+        elements.content.classList.toggle("sidebar-hidden");
     }
 
-    // CARREGAR CATEGORIAS
-    function carregarCategorias() {
-        fetch("../api/categoryApi.php?action=list")
-            .then((response) => response.json())
-            .then((categorias) => {
-                const categoriaDropdown = document.getElementById("categoria");
-                categoriaDropdown.innerHTML = '<option selected>Selecionar categoria</option>';
-
-                const categoriaEditDropdown = document.getElementById("edit-categoria");
-                categoriaEditDropdown.innerHTML = '<option selected>Selecionar categoria</option>';
-
-                categorias.forEach((categoria) => {
-                    const option = document.createElement("option");
-                    option.value = categoria.id;
-                    option.text = categoria.nome;
-                    categoriaDropdown.add(option.cloneNode(true));
-                    categoriaEditDropdown.add(option);
-                });
-            })
-            .catch((error) => console.error("Erro ao carregar categorias:", error));
+    // MOSTRAR FORMULÁRIO DE ADICIONAR ATIVIDADE
+    function mostrarFormularioAtividade(event) {
+        event.preventDefault();
+        elements.activityForm.style.display = 'block';
+        elements.sentActivitiesCard.style.display = 'none';
+        carregarCategorias();
     }
 
-    // COLETAR + ENVIAR DADOS FORMULÁRIO - RELATÓRIO ATIVIDADE
-    const addActivityForm = document.querySelector('#activity-form form');
-    addActivityForm.addEventListener('submit', function (event) {
+    // MOSTRAR CARD DE ATIVIDADES ENVIADAS
+    function mostrarCardAtividadesEnviadas(event) {
+        event.preventDefault();
+        elements.activityForm.style.display = 'none';
+        elements.sentActivitiesCard.style.display = 'block';
+        carregarAtividadesEnviadas();
+    }
+
+    // CARREGAR CATEGORIAS PARA O DROPDOWN
+    async function carregarCategorias() {
+        try {
+            const response = await fetch("../api/categoryApi.php?action=list");
+            const categorias = await response.json();
+
+            const categoriaDropdown = document.getElementById("categoria");
+            const categoriaEditDropdown = document.getElementById("edit-categoria");
+
+            categoriaDropdown.innerHTML = '<option selected>Selecionar categoria</option>';
+            categoriaEditDropdown.innerHTML = '<option selected>Selecionar categoria</option>';
+
+            categorias.forEach(categoria => {
+                const option = document.createElement("option");
+                option.value = categoria.id;
+                option.text = categoria.nome;
+                categoriaDropdown.add(option.cloneNode(true));
+                categoriaEditDropdown.add(option);
+            });
+        } catch (error) {
+            console.error("Erro ao carregar categorias:", error);
+        }
+    }
+
+    // ADICIONAR ATIVIDADE - COLETAR E ENVIAR DADOS DO FORMULÁRIO
+    async function adicionarAtividade(event) {
         event.preventDefault();
 
         const nome = document.getElementById('nome').value;
@@ -86,45 +104,47 @@ document.addEventListener("DOMContentLoaded", function () {
         formData.append('texto_reflexao', texto_reflexao);
         formData.append('certificado', certificado);
 
-        fetch('../api/reportApi.php?action=add', {
-            method: 'POST',
-            body: formData
-        })
-            .then(response => response.json())
-            .then(result => {
-                if (result.status === 'success') {
-                    messageContainer.innerHTML = `<p class="text-success">${result.message}</p>`;
-                    addActivityForm.reset();
-                } else {
-                    messageContainer.innerHTML = `<p class="text-danger">${result.message}</p>`;
-                }
-            })
-            .catch(error => {
-                console.error('Erro ao enviar a atividade:', error);
+        try {
+            const response = await fetch('../api/reportApi.php?action=add', {
+                method: 'POST',
+                body: formData
             });
-    });
 
-    // CARREGAR ATIVIDADES ENVIADAS
-    function carregarAtividadesEnviadas() {
-        fetch("../api/reportApi.php?action=list")
-            .then((response) => response.json())
-            .then((atividades) => {
-                exibirAtividadesEnviadas(atividades);
-            })
-            .catch((error) => console.error("Erro ao carregar atividades:", error));
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                messageContainer.innerHTML = `<p class="text-success">${result.message}</p>`;
+                document.querySelector('#activity-form form').reset();
+            } else {
+                messageContainer.innerHTML = `<p class="text-danger">${result.message}</p>`;
+            }
+        } catch (error) {
+            console.error('Erro ao enviar a atividade:', error);
+        }
     }
 
-    // MOSTRAR ATIVIDADES ENVIADAS NO CARD
+
+    // CARREGAR ATIVIDADES ENVIADAS
+    async function carregarAtividadesEnviadas() {
+        try {
+            const response = await fetch("../api/reportApi.php?action=list");
+            const atividades = await response.json();
+            exibirAtividadesEnviadas(atividades);
+        } catch (error) {
+            console.error("Erro ao carregar atividades:", error);
+        }
+    }
+
+    // EXIBIR ATIVIDADES ENVIADAS NA TABELA
     function exibirAtividadesEnviadas(atividades) {
-        const tabelaBody = document.querySelector(".table tbody");
-        tabelaBody.innerHTML = "";
+        elements.tabelaBody.innerHTML = "";
 
         if (atividades.status === "error") {
-            tabelaBody.innerHTML = `<tr><td colspan="5">${atividades.message}</td></tr>`;
+            elements.tabelaBody.innerHTML = `<tr><td colspan="5">${atividades.message}</td></tr>`;
             return;
         }
 
-        atividades.forEach((atividade) => {
+        atividades.forEach(atividade => {
             const linha = document.createElement("tr");
 
             // NOME
@@ -152,54 +172,58 @@ document.addEventListener("DOMContentLoaded", function () {
             const divAcoes = document.createElement("div");
             divAcoes.classList.add("d-flex");
 
-            // BTN EDITAR
-            if (atividade.status === "Aguardando validacao" || atividade.status === "Invalido" || atividade.status === "Recategorizacao") {
-                const botaoEditar = document.createElement("button");
-                botaoEditar.classList.add("btn", "btn-sm", "btn-primary", "me-2");
-                botaoEditar.textContent = "Editar";
-                botaoEditar.addEventListener("click", () => { carregarCategorias(); editarAtividade(atividade.id);});
-                divAcoes.appendChild(botaoEditar);
+            // EDITAR
+            if (["Aguardando validacao", "Invalido", "Recategorizacao"].includes(atividade.status)) {
+                const btnEditar = criarBotao("Editar", "btn-primary", () => { carregarCategorias(); editarAtividade(atividade.id);});
+                divAcoes.appendChild(btnEditar);
             }
 
-            // BTN FEEDBACK
-            if (atividade.status === "Invalido" || atividade.status === "Recategorizacao") {
-                const botaoFeedback = document.createElement("button");
-                botaoFeedback.classList.add("btn", "btn-sm", "btn-danger");
-                botaoFeedback.textContent = "Feedback";
-                botaoFeedback.addEventListener("click", () => visualizarFeedback(atividade.id));
-                divAcoes.appendChild(botaoFeedback);
+            // FEEDBACK
+            if (["Invalido", "Recategorizacao"].includes(atividade.status)) {
+                const btnFeedback = criarBotao("Feedback", "btn-danger", () => visualizarFeedback(atividade.id));
+                divAcoes.appendChild(btnFeedback);
             }
 
             colunaAcoes.appendChild(divAcoes);
             linha.appendChild(colunaAcoes);
-
-            tabelaBody.appendChild(linha);
+            elements.tabelaBody.appendChild(linha);
         });
     }
 
-    // ABRE MODAL EDITAR ATIVIDADE
-    function editarAtividade(id_relatorio) {
-        fetch(`../api/reportApi.php?action=get_activity&id_relatorio=${id_relatorio}`)
-            .then(response => response.json())
-            .then(atividade => {
-                if (atividade.status !== "error") {
-                    document.getElementById('edit-id-relatorio').value = atividade.id;
-                    document.getElementById('edit-nome').value = atividade.nome;
-                    document.getElementById('edit-data').value = atividade.data_realizacao;
-                    document.getElementById('edit-descricao').value = atividade.texto_reflexao;
-                    document.getElementById('edit-categoria').value = atividade.id_categoria;
+    // CRIAR BOTÕES (BOTÕES DE AÇÕES - EDITAR/FEEDBACK)
+    function criarBotao(texto, classe, onClick) {
+        const button = document.createElement('button');
+        button.classList.add('btn', 'btn-sm', classe, 'me-2');
+        button.textContent = texto;
+        button.addEventListener('click', onClick);
+        return button;
+    }
 
-                    const editModal = new bootstrap.Modal(document.getElementById('editActivityModal'));
-                    editModal.show();
-                } else {
-                    console.error(atividade.message);
-                }
-            })
-            .catch(error => console.error("Erro ao carregar a atividade para edição:", error));
+    // ABRIR MODAL PARA EDITAR ATIVIDADE
+    async function editarAtividade(id_relatorio) {
+        try {
+            const response = await fetch(`../api/reportApi.php?action=get_activity&id_relatorio=${id_relatorio}`);
+            const atividade = await response.json();
+
+            if (atividade.status !== "error") {
+                document.getElementById('edit-id-relatorio').value = atividade.id;
+                document.getElementById('edit-nome').value = atividade.nome;
+                document.getElementById('edit-data').value = atividade.data_realizacao;
+                document.getElementById('edit-descricao').value = atividade.texto_reflexao;
+                document.getElementById('edit-categoria').value = atividade.id_categoria;
+
+                const editModal = new bootstrap.Modal(document.getElementById('editActivityModal'));
+                editModal.show();
+            } else {
+                console.error(atividade.message);
+            }
+        } catch (error) {
+            console.error("Erro ao carregar a atividade para edição:", error);
+        }
     }
 
     // ENVIAR DADOS - EDITAR ATIVIDADE
-    document.getElementById('edit-activity-form').addEventListener('submit', function(event) {
+    async function salvarEdicaoAtividade(event) {
         event.preventDefault();
 
         const id_relatorio = document.getElementById('edit-id-relatorio').value;
@@ -219,47 +243,51 @@ document.addEventListener("DOMContentLoaded", function () {
         formData.append('texto_reflexao', texto_reflexao);
         formData.append('status', status);
 
-        fetch('../api/reportApi.php?action=update', {
-            method: 'POST',
-            body: formData
-        })
-            .then(response => response.json())
-            .then(result => {
-                if (result.status === 'success') {
-                    alert('Atividade atualizada com sucesso!');
-                    const editModal = bootstrap.Modal.getInstance(document.getElementById('editActivityModal'));
-                    editModal.hide();
-                    carregarAtividadesEnviadas();
-                } else {
-                    alert('Erro ao atualizar atividade: ' + result.message);
-                }
-            })
-            .catch(error => console.error('Erro ao atualizar a atividade:', error));
-    });
+        try {
+            const response = await fetch('../api/reportApi.php?action=update', {
+                method: 'POST',
+                body: formData
+            });
 
-    // VISUALIZAR O FEEDBACK
-    function visualizarFeedback(id_relatorio) {
-        fetch(`../api/reportApi.php?action=feedback&id_relatorio=${id_relatorio}`)
-            .then(response => response.json())
-            .then(feedback => {
-                if (feedback.status !== "error") {
-                    document.getElementById('atividadeNome').textContent = feedback.atividade_nome;
-                    document.getElementById('feedbackTexto').textContent = feedback.texto_feedback;
+            const result = await response.json();
 
-                    const feedbackModal = new bootstrap.Modal(document.getElementById('feedbackModal'));
-                    feedbackModal.show();
-                } else {
-                    console.error(feedback.message);
-                }
-            })
-            .catch(error => console.error("Erro ao carregar o feedback:", error));
+            if (result.status === 'success') {
+                alert('Atividade atualizada com sucesso!');
+                const editModal = bootstrap.Modal.getInstance(document.getElementById('editActivityModal'));
+                editModal.hide();
+                carregarAtividadesEnviadas();
+            } else {
+                alert('Erro ao atualizar atividade: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Erro ao atualizar a atividade:', error);
+        }
+    }
+
+    // VISUALIZAR O FEEDBACK DA ATIVIDADE
+    async function visualizarFeedback(id_relatorio) {
+        try {
+            const response = await fetch(`../api/reportApi.php?action=feedback&id_relatorio=${id_relatorio}`);
+            const feedback = await response.json();
+
+            if (feedback.status !== "error") {
+                document.getElementById('atividadeNome').textContent = feedback.atividade_nome;
+                document.getElementById('feedbackTexto').textContent = feedback.texto_feedback;
+
+                const feedbackModal = new bootstrap.Modal(document.getElementById('feedbackModal'));
+                feedbackModal.show();
+            } else {
+                console.error(feedback.message);
+            }
+        } catch (error) {
+            console.error("Erro ao carregar o feedback:", error);
+        }
+    }
+
+    // LOGOUT
+    function logout(event) {
+        event.preventDefault();
+        window.location.href = "../api/logout.php";
     }
 });
 
-// LOGOUT
-document
-    .getElementById("logout-btn")
-    .addEventListener("click", function (event) {
-        event.preventDefault();
-        window.location.href = "../api/logout.php";
-    });
