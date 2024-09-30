@@ -14,23 +14,27 @@ function validarLogin() {
 
         if (!empty($data['email']) && !empty($data['senha'])) {
             $email = mysqli_real_escape_string($connection, $data['email']);
-            $senha = mysqli_real_escape_string($connection, $data['senha']);
+            $senha = $data['senha'];
 
-            $query = "SELECT id, nome, email, tipo 
+            $query = "SELECT id, nome, email, senha, tipo 
                       FROM usuario 
-                      WHERE email = '$email' AND senha = '$senha'";
+                      WHERE email = '$email'";
 
             $result = consultar_dado($query);
 
             if (is_array($result) && count($result) > 0) {
                 $user = $result[0];
 
-                $_SESSION['id_usuario'] = $user['id'];
-                $_SESSION['nome'] = $user['nome'];
-                $_SESSION['email'] = $user['email'];
-                $_SESSION['tipo'] = $user['tipo'];
+                if (password_verify($senha, $user['senha'])) {
+                    $_SESSION['id_usuario'] = $user['id'];
+                    $_SESSION['nome'] = $user['nome'];
+                    $_SESSION['email'] = $user['email'];
+                    $_SESSION['tipo'] = $user['tipo'];
 
-                json_return(["status" => "success", "user" => $user]);
+                    json_return(["status" => "success", "user" => $user]);
+                } else {
+                    json_return(["status" => "error", "message" => "Email ou senha incorretos."]);
+                }
             } else {
                 json_return(["status" => "error", "message" => "Email ou senha incorretos."]);
             }

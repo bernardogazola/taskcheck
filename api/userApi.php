@@ -44,14 +44,14 @@ if($method === "POST") {
     json_return(["status" => "error", "message" => "Método não suportado"]);
 }
 
-//REVISARRRRRRRRRRRRRRRRR
 function adicionarUsuario($data) {
     global $connection;
 
     $tipo = $data['tipo'];
     $nome = mysqli_real_escape_string($connection, $data['nome']);
     $email = mysqli_real_escape_string($connection, $data['email']);
-    $senha = mysqli_real_escape_string($connection, $data['senha']);
+
+    $senha = password_hash($data['senha'], PASSWORD_DEFAULT);
 
     $colunas = "nome, email, senha, tipo";
     $valores = "'$nome', '$email', '$senha', '$tipo'";
@@ -89,19 +89,17 @@ function adicionarUsuario($data) {
 
 function atualizarUsuario($data) {
     global $connection;
-    // REVISAR NECESSIDADE DE ISSET
+
     if (isset($data['id'], $data['nome'], $data['email'], $data['senha'])) {
         $id = mysqli_real_escape_string($connection, $data['id']);
         $nome = mysqli_real_escape_string($connection, $data['nome']);
         $email = mysqli_real_escape_string($connection, $data['email']);
-        $senha = mysqli_real_escape_string($connection, $data['senha']);
+
+        $senha = password_hash($data['senha'], PASSWORD_DEFAULT);
 
         $atributos = "nome = '$nome', email = '$email', senha = '$senha'";
         $result = atualizar_dado('usuario', $atributos, "id = $id");
 
-        //json_return($result);
-
-        // REVISAR
         if ($result['status'] === 'success') {
             json_return(["status" => "success", "message" => "Usuário atualizado com sucesso."]);
         } else {

@@ -1,52 +1,75 @@
-document.addEventListener("DOMContentLoaded", function () {
-  document
-    .getElementById("login-form")
-    .addEventListener("submit", function (event) {
-      event.preventDefault();
+document.addEventListener("DOMContentLoaded", () => {
+    const elements = {
+        loginForm: document.getElementById("login-form"),
+        emailInput: document.getElementById("email"),
+        senhaInput: document.getElementById("senha"),
+        responseMessage: document.getElementById("response-message"),
+        togglePassword: document.getElementById("toggle-password"),
+        eyeIcon: document.getElementById("eye-icon")
+    };
 
-      const email = document.getElementById("email").value;
-      const senha = document.getElementById("senha").value;
+    // INICIALIZA EVENTOS AO CARREGAR A PÁGINA
+    init();
 
-      fetch("./api/login.php", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email: email, senha: senha }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          const messageContainer = document.getElementById("response-message");
+    // CONFIG DOS EVENTOS
+    function init() {
+        // FORMULARIO LOGIN
+        elements.loginForm.addEventListener("submit", enviarLogin);
 
-          if (data.status === "success" && data.user) {
-            if (data.user.tipo === "aluno") {
-              window.location.href = "/aluno";
-            } else if (data.user.tipo === "professor") {
-              window.location.href = "ainda não fiz";
-            } else if (data.user.tipo === "coordenador") {
-              window.location.href = "/coordenador";
+        // MOSTRAR/OCULTAR SENHA
+        elements.togglePassword.addEventListener("click", togglePasswordVisibility);
+    }
+
+    // FORMULARIO LOGIN
+    async function enviarLogin(event) {
+        event.preventDefault();
+
+        const email = elements.emailInput.value;
+        const senha = elements.senhaInput.value;
+
+        try {
+            const response = await fetch("./api/login.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ email, senha }),
+            });
+
+            const data = await response.json();
+
+            if (data.status === "success" && data.user) {
+                redirectDashboard(data.user.tipo);
+            } else {
+                elements.responseMessage.innerHTML = `<p class="text-danger">${data.message || "Erro no login"}</p>`;
             }
-          } else {
-            messageContainer.innerHTML = `<p class="text-danger">${data.message || "Erro no login"}</p>`;
-          }
-        })
-        .catch((error) => console.error("Erro:", error));
-    });
+        } catch (error) {
+            console.error("Erro:", error);
+        }
+    }
 
-    const togglePassword = document.getElementById('toggle-password');
-    const passwordInput = document.getElementById('senha');
-    const eyeIcon = document.getElementById('eye-icon');
+    // REDIRECIONAR USUARIO DE ACORDO COM O TIPO
+    function redirectDashboard(userType) {
+        if (userType === "aluno") {
+            window.location.href = "/aluno";
+        } else if (userType === "professor") {
+            window.location.href = "ainda não fiz";
+        } else if (userType === "coordenador") {
+            window.location.href = "/coordenador";
+        }
+    }
 
-    togglePassword.addEventListener('click', function (e) {
-        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-        passwordInput.setAttribute('type', type);
+    // MOSTRAR/OCULTAR SENHA
+    function togglePasswordVisibility() {
+        const type = elements.senhaInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        elements.senhaInput.setAttribute('type', type);
 
         if (type === 'text') {
-            eyeIcon.classList.remove('fa-eye');
-            eyeIcon.classList.add('fa-eye-slash');
+            elements.eyeIcon.classList.remove('fa-eye');
+            elements.eyeIcon.classList.add('fa-eye-slash');
         } else {
-            eyeIcon.classList.remove('fa-eye-slash');
-            eyeIcon.classList.add('fa-eye');
+            elements.eyeIcon.classList.remove('fa-eye-slash');
+            elements.eyeIcon.classList.add('fa-eye');
         }
-    });
+    }
 });
