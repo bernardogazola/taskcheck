@@ -140,6 +140,23 @@ CREATE TABLE IF NOT EXISTS `taskcheck`.`feedback` (
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
+-- Tabela professor_curso (relaciona professores com cursos)
+CREATE TABLE IF NOT EXISTS `taskcheck`.`professor_curso` (
+    `id_professor` INT NOT NULL,
+    `id_curso` INT NOT NULL,
+    PRIMARY KEY (`id_professor`, `id_curso`),
+    INDEX `fk_professor_curso_professor_idx` (`id_professor` ASC),
+    INDEX `fk_professor_curso_curso_idx` (`id_curso` ASC),
+    CONSTRAINT `fk_professor_curso_professor`
+    FOREIGN KEY (`id_professor`)
+    REFERENCES `taskcheck`.`professor` (`id_usuario`)
+    ON DELETE CASCADE,
+    CONSTRAINT `fk_professor_curso_curso`
+    FOREIGN KEY (`id_curso`)
+    REFERENCES `taskcheck`.`curso` (`id`)
+    ON DELETE CASCADE)
+ENGINE = InnoDB;
+
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;

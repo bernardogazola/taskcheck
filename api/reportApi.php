@@ -8,7 +8,7 @@ include '../database/functions.php';
 $method = $_SERVER['REQUEST_METHOD'];
 $action = isset($_GET['action']) ? $_GET['action'] : null;
 
-if (!isset($_SESSION['id_usuario']) || !isset($_SESSION['tipo']) || $_SESSION['tipo'] !== 'aluno') {
+if (!isset($_SESSION['id_usuario']) || !isset($_SESSION['tipo'])/* || $_SESSION['tipo'] !== 'aluno'*/) {
     json_return(["status" => "error", "message" => "Usuário não autenticado ou sem permissão."]);
     exit();
 }
@@ -53,6 +53,13 @@ if ($method === "POST") {
                 obterAtividade($_GET['id_relatorio']);
             } else {
                 json_return(["status" => "error", "message" => "ID do relatório não fornecido."]);
+            }
+            break;
+        case 'list_by_professor':
+            if ($_SESSION['tipo'] === 'professor') {
+                listarRelatoriosPorProfessor($id_usuario);
+            } else {
+                json_return(["status" => "error", "message" => "Inválido."]);
             }
             break;
         default:
@@ -121,6 +128,34 @@ function listarAtividadesEnviadas($id_usuario) {
         json_return($atividades);
     } else {
         json_return(["status" => "error", "message" => "Nenhuma atividade encontrada."]);
+    }
+}
+
+function listarRelatoriosPorProfessor($id_professor) {
+    $query = "
+        SELECT 
+            r.id, 
+            r.nome AS atividade, 
+            c.nome AS categoria, 
+            cu.nome AS curso, 
+               u.nome AS aluno, 
+               r.data_realizacao, 
+               r.status
+        FROM relatorio_atividade r
+        INNER JOIN categoria c ON r.id_categoria = c.id
+        INNER JOIN curso cu ON c.id_curso = cu.id
+        INNER JOIN aluno a ON r.id_aluno = a.id_usuario
+        INNER JOIN usuario u ON a.id_usuario = u.id
+        INNER JOIN professor_curso pc ON pc.id_curso = cu.id
+        WHERE pc.id_professor = $id_professor
+    ";
+
+    $result = consultar_dado($query);
+
+    if (is_array($result) && count($result) > 0) {
+        json_return($result);
+    } else {
+        json_return(["status" => "error", "message" => "Nenhum relatório encontrado para o professor informado."]);
     }
 }
 
