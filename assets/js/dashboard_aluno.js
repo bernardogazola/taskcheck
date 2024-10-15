@@ -123,7 +123,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-
     // CARREGAR ATIVIDADES ENVIADAS
     async function carregarAtividadesEnviadas() {
         try {

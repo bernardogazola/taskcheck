@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (userType === "aluno") {
             window.location.href = "/aluno";
         } else if (userType === "professor") {
-            window.location.href = "ainda não fiz";
+            window.location.href = "/professor";
         } else if (userType === "coordenador") {
             window.location.href = "/coordenador";
         }

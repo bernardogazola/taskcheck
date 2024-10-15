@@ -7,7 +7,7 @@ if (isset($_SESSION['id_usuario'])) {
             header("Location: /aluno");
             exit();
         case 'professor':
-            header("Location: NÃO FIZ");
+            header("Location: /professor");
             exit();
         case 'coordenador':
             header("Location: /coordenador");
