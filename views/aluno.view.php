@@ -42,7 +42,7 @@ if (!isset($_SESSION['id_usuario']) || $_SESSION['tipo'] != 'aluno') {
                 </div>
                 <div class="mb-3">
                     <label for="certificado" class="form-label">Anexar certificado</label>
-                    <input type="file" class="form-control" id="certificado" />
+                    <input type="file" class="form-control" id="certificado" accept="application/pdf" />
                 </div>
                 <div id="response-message"></div>
                 <button type="submit" class="btn btn-primary">Enviar</button>

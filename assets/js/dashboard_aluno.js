@@ -96,6 +96,12 @@ document.addEventListener("DOMContentLoaded", () => {
             messageContainer.innerHTML = `<p class="text-danger">Por favor, selecione uma categoria válida.</p>`;
             return;
         }
+        
+        if (certificado && certificado.type !== "application/pdf") {
+            messageContainer.innerHTML = `<p class="text-danger">Apenas arquivos PDF são permitidos.</p>`;
+            return;
+        }
+        
 
         const formData = new FormData();
         formData.append('nome', nome);

@@ -89,9 +89,18 @@ function adicionarAtividade($dados) {
     // FORMATAR DD/MM/AAAA PARA AAAA-MM-DD
     $data_realizacao_formatada = date_format(date_create_from_format('d/m/Y', $data_realizacao), 'Y-m-d');
 
+    // Verifica se um certificado foi enviado e se eh pdf
     if (isset($_FILES['certificado']) && $_FILES['certificado']['error'] === UPLOAD_ERR_OK) {
-        $certificado = file_get_contents($_FILES['certificado']['tmp_name']);
-        $certificado = mysqli_real_escape_string($connection, $certificado);
+        $fileType = $_FILES['certificado']['type'];
+        $fileExtension = pathinfo($_FILES['certificado']['name'], PATHINFO_EXTENSION);
+
+        if ($fileType === 'application/pdf' && strtolower($fileExtension) === 'pdf') {
+            $certificado = file_get_contents($_FILES['certificado']['tmp_name']);
+            $certificado = mysqli_real_escape_string($connection, $certificado);
+        } else {
+            json_return(["status" => "error", "message" => "Apenas arquivos PDF são permitidos."]);
+            return;
+        }
     } else {
         $certificado = null;
     }
