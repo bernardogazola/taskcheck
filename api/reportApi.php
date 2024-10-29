@@ -32,6 +32,27 @@ if ($method === "POST") {
                 json_return(["status" => "error", "message" => "ID do relatório não fornecido."]);
             }
             break;
+        case 'validate':
+            if ($_SESSION['tipo'] === "professor" && isset($_POST['id_relatorio'])) {
+                validarRelatorio($_POST['id_relatorio']);
+            } else {
+                json_return(["status" => "error", "message" => "Usuário não autorizado."]);
+            }
+            break;
+        case 'invalidate':
+            if ($_SESSION['tipo'] === "professor" && isset($_POST['id_relatorio'])) {
+                invalidarRelatorio($_POST['id_relatorio']);
+            } else {
+                json_return(["status" => "error", "message" => "Usuário não autorizado."]);
+            }
+            break;
+        case 'revert_validation':
+            if ($_SESSION['tipo'] === "professor" && isset($_POST['id_relatorio'])) {
+                reverterValidacao($_POST['id_relatorio']);
+            } else {
+                json_return(["status" => "error", "message" => "Usuário não autorizado."]);
+            }
+            break;
         default:
             json_return(["status" => "error", "message" => "Ação não encontrada."]);
             break;
@@ -222,8 +243,9 @@ function obterAtividade($id_relatorio) {
             r.nome,
             r.texto_reflexao,
             r.data_realizacao,
-            r.id_categoria,
-            r.certificado
+            r.data_envio,
+            r.status,
+            r.id_categoria
         FROM relatorio_atividade r
         WHERE r.id = $id_relatorio
     ";
@@ -297,5 +319,103 @@ function verificarAltaDemandaValidacao($id_professor) {
     $quantidadePendentes = isset($resultadoContagem[0]['pendentes']) ? $resultadoContagem[0]['pendentes'] : 0;
 
     json_return([ "status" => "success", "quantidadePendentes" => $quantidadePendentes ]);
+}
+
+// REVER - SEM UTILIZAÇÃO POR ENQUANTO
+function adicionarFeedbackHistorico($id_feedback, $id_relatorio, $texto_feedback, $id_professor) {
+    $queryUltimaVersao = "
+        SELECT COALESCE(MAX(versao), 0) + 1 AS nova_versao
+        FROM feedback_historico
+        WHERE id_relatorio = $id_relatorio
+    ";
+    $ultimaVersaoResult = consultar_dado($queryUltimaVersao);
+    $novaVersao = $ultimaVersaoResult[0]['nova_versao'];
+
+    // Inserir o novo feedback no histórico
+    $colunas = "id_feedback, id_relatorio, texto_feedback, data_envio, id_professor, versao";
+    $valores = "$id_feedback, $id_relatorio, '$texto_feedback', NOW(), $id_professor, $novaVersao";
+
+    $resultado = inserir_dado("feedback_historico", $colunas, $valores);
+
+    if ($resultado['status'] !== 'success') {
+        json_return(["status" => "error", "message" => "Erro ao adicionar feedback ao histórico: " . $resultado['message']]);
+    }
+}
+
+function validarRelatorio($id_relatorio) {
+    $atributos = "status = 'Valido'";
+    $condicao = "id = $id_relatorio";
+
+    $resultado = atualizar_dado("relatorio_atividade", $atributos, $condicao);
+
+    if ($resultado['status'] === 'success') {
+        json_return(["status" => "success", "message" => "Relatório validado com sucesso."]);
+    } else {
+        json_return(["status" => "error", "message" => "Erro ao validar o relatório."]);
+    }
+}
+
+function invalidarRelatorio($id_relatorio) {
+    global $connection;
+    $feedback = mysqli_real_escape_string($connection, $_POST['feedback']);
+    $id_professor = $_SESSION['id_usuario'];
+
+    $atributos = "status = 'Invalido'";
+    $condicao = "id = $id_relatorio";
+
+    $resultado = atualizar_dado("relatorio_atividade", $atributos, $condicao);
+    if ($resultado['status'] === 'success') {
+        // ADD FEEDBACK
+        $colunas = "texto_feedback, id_relatorio, data_envio, id_professor";
+        $valores = "'$feedback', $id_relatorio, NOW(), $id_professor";
+        $feedbackResult = inserir_dado("feedback", $colunas, $valores);
+
+        if ($feedbackResult['status'] === 'success') {
+            // Armazenar no histórico do feedback - REVERRRRRRRRRRRRRR
+            //$id_feedback = $feedbackResult['insert_id'];
+            //adicionarFeedbackHistorico($id_feedback, $id_relatorio, $feedback, $id_professor);
+            json_return(["status" => "success", "message" => "Relatório invalidado com sucesso."]);
+        } else {
+            json_return(["status" => "error", "message" => "Erro ao salvar o feedback: " . $feedbackResult['message']]);
+        }
+    } else {
+        json_return(["status" => "error", "message" => "Erro ao invalidar o relatório."]);
+    }
+}
+
+function reverterValidacao($id_relatorio) {
+    global $connection;
+    $justificativa = mysqli_real_escape_string($connection, $_POST['justificativa']);
+    $id_professor = $_SESSION['id_usuario'];
+
+    // FEEDBACK ATUAL
+    $queryFeedback = "SELECT * FROM feedback WHERE id_relatorio = $id_relatorio";
+    $feedbackAtual = consultar_dado($queryFeedback);
+
+    if (!empty($feedbackAtual)) {
+        // ADD FEEDBACK ATUAL NO HISTORICO FEEDBACK
+        $id_feedback = $feedbackAtual[0]['id'];
+        $texto_feedback = $feedbackAtual[0]['texto_feedback'];
+        $data_envio = $feedbackAtual[0]['data_envio'];
+        $versao = 1 + (int) consultar_dado("SELECT MAX(versao) AS max_versao FROM feedback_historico WHERE id_relatorio = $id_relatorio")[0]['max_versao'];
+
+        $atributosHistorico = "id_feedback, id_relatorio, texto_feedback, data_envio, id_professor, versao";
+        $valoresHistorico = "$id_feedback, $id_relatorio, '$texto_feedback', '$data_envio', $id_professor, $versao";
+
+        inserir_dado("feedback_historico", $atributosHistorico, $valoresHistorico);
+
+        // DELETAR FEEDBACK ATUAL APOS INSERCAO HISTORICO
+        deletar_dado("feedback", "id = $id_feedback");
+    }
+
+    $atributosReversao = "id_relatorio, justificativa, id_professor";
+    $valoresReversao = "$id_relatorio, '$justificativa', $id_professor";
+    inserir_dado("reversao_validacao", $atributosReversao, $valoresReversao);
+
+    $atributosRelatorio = "status = 'Aguardando validacao'";
+    $condicaoRelatorio = "id = $id_relatorio";
+    atualizar_dado("relatorio_atividade", $atributosRelatorio, $condicaoRelatorio);
+
+    json_return(["status" => "success", "message" => "Validação revertida com sucesso."]);
 }
 ?>

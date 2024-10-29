@@ -21,16 +21,10 @@ if (!isset($_SESSION['id_usuario']) || $_SESSION['tipo'] != 'professor') {
             <h2 class="card-title mb-4">Relatórios Submetidos</h2>
 
             <div class="row mb-4">
-                <div class="col-md-6">
-                    <input type="text" class="form-control" id="pesquisarAtividades" placeholder="Pesquisar">
-                </div>
                 <div class="col-md-3">
                     <select class="form-select" id="filtrarAtividades">
                         <!-- CATEGORIAS -->
                     </select>
-                </div>
-                <div class="col-md-3 text-end">
-                    <button class="btn btn-primary">Filtrar</button>
                 </div>
             </div>
 
@@ -42,14 +36,47 @@ if (!isset($_SESSION['id_usuario']) || $_SESSION['tipo'] != 'professor') {
                         <th>Curso</th>
                         <th>Categoria</th>
                         <th>Aluno</th>
-                        <th>Data de Realização</th>
                         <th>Status</th>
-                        <th>Certificado</th>
                         <th>Ações</th>
                     </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DETALHES -->
+    <div class="modal fade" id="detalhesModal" tabindex="-1" aria-labelledby="detalhesModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detalhesModalLabel">Detalhes do Relatório</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Data de Realização:</strong> <span id="detalheDataRealizacao"></span></p>
+                    <p><strong>Data de Envio:</strong> <span id="detalheDataEnvio"></span></p>
+                    <p><strong>Categoria:</strong> <span id="detalheCategoria"></span></p>
+                    <p><strong>Nome:</strong> <span id="detalheNome"></span></p>
+                    <p><strong>Reflexão:</strong> <span id="detalheReflexao"></span></p>
+                    <!-- CAMPO FEEDBACK -->
+                    <div id="feedbackField" style="display: none;">
+                        <label for="feedbackText" class="form-label">Feedback:</label>
+                        <textarea id="feedbackText" class="form-control" rows="3"></textarea>
+                    </div>
+                    <!-- CAMPO JUSTIFICATIVA -->
+                    <div id="reversaoField" style="display: none;">
+                        <label for="justificativaReversao" class="form-label">Justificativa para Reversão:</label>
+                        <textarea id="justificativaReversao" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="btnCertificado" class="btn btn-secondary">Certificado</button>
+                    <button id="btnValidar" class="btn btn-success">Validar</button>
+                    <button id="btnInvalidar" class="btn btn-danger">Invalidar</button>
+                    <button id="btnReverter" class="btn btn-warning" style="display: none;">Reverter Validação</button>
+                </div>
             </div>
         </div>
     </div>

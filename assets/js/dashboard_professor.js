@@ -8,6 +8,11 @@ document.addEventListener("DOMContentLoaded", () => {
         tabelaBody: document.querySelector("#sent-reports-card .table tbody"),
         filtrarAtividadesDropdown: document.getElementById("filtrarAtividades"),
         avisoAltaDemanda: document.getElementById("avisoAltaDemanda"),
+        detalhesModal: new bootstrap.Modal(document.getElementById("detalhesModal")),
+        btnCertificado: document.getElementById("btnCertificado"),
+        btnValidar: document.getElementById("btnValidar"),
+        btnInvalidar: document.getElementById("btnInvalidar"),
+        btnReverter: document.getElementById("btnReverter"),
         logoutButton: document.getElementById("logout-btn")
     }
 
@@ -95,20 +100,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 <td>${relatorio.curso}</td>
                 <td>${relatorio.categoria}</td>
                 <td>${relatorio.aluno}</td>
-                <td>${relatorio.data_realizacao}</td>
                 <td>${relatorio.status}</td>
             `;
-
-            const colunaCertificado = document.createElement("td");
-            const btnCertificado = criarBotao("Certificado", "btn-secondary", () => visualizarCertificado(relatorio.id));
-            colunaCertificado.appendChild(btnCertificado);
-            linha.appendChild(colunaCertificado);
 
             const colunaAcoes = document.createElement("td");
             const divAcoes = document.createElement("div");
             divAcoes.classList.add("d-flex");
 
-            const btnDetalhes = criarBotao("Detalhes", "btn-info", () => visualizarFeedback(relatorio.id));
+            const btnDetalhes = criarBotao("Detalhes", "btn-primary", () => mostrarDetalhes(relatorio.id));
             divAcoes.appendChild(btnDetalhes);
 
             colunaAcoes.appendChild(divAcoes);
@@ -150,7 +149,7 @@ document.addEventListener("DOMContentLoaded", () => {
         window.open(`../api/reportApi.php?action=get_certificate&id_relatorio=${idRelatorio}`, '_blank');
     }
 
-    // VISUALIZAR FEEDBACK -- EM DESENVOLVIMENTE - NÃO FINALIZADO
+    // VISUALIZAR FEEDBACK -- EM DESENVOLVIMENTO - NÃO FINALIZADO
     async function visualizarFeedback(idRelatorio) {
         try {
             const response = await fetch(`../api/reportApi.php?action=feedback&id_relatorio=${idRelatorio}`);
@@ -163,6 +162,146 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         } catch (error) {
             console.error("Erro ao carregar o feedback:", error);
+        }
+    }
+
+    async function obterCategoria(categoriaId) {
+        try {
+            const response = await fetch(`../api/categoryApi.php?action=get&id=${categoriaId}`);
+            const categoria = await response.json();
+
+            return categoria.nome;
+        } catch (error) {
+            console.error("Erro ao obter categoria:", error);
+        }
+    }
+
+    // MODAL COM DETALHES
+    async function mostrarDetalhes(relatorioId) {
+        try {
+            const response = await fetch(`../api/reportApi.php?action=get_activity&id_relatorio=${relatorioId}`);
+            const relatorio = await response.json();
+
+            if (relatorio.status !== "error") {
+                document.getElementById("detalheDataRealizacao").textContent = relatorio.data_realizacao;
+                document.getElementById("detalheDataEnvio").textContent = relatorio.data_envio;
+                document.getElementById("detalheCategoria").textContent = await obterCategoria(relatorio.id_categoria);
+                document.getElementById("detalheNome").textContent = relatorio.nome;
+                document.getElementById("detalheReflexao").textContent = relatorio.texto_reflexao;
+
+                elements.btnCertificado.onclick = () => visualizarCertificado(relatorioId);
+                elements.btnValidar.onclick = () => validarRelatorio(relatorioId);
+                elements.btnInvalidar.onclick = () => abrirCampoFeedback(relatorioId);
+                elements.btnReverter.onclick = () => abrirCampoReversao(relatorioId);
+
+                if (relatorio.status === "Aguardando validacao") {
+                    elements.btnValidar.style.display = "inline";
+                    elements.btnInvalidar.style.display = "inline";
+                    elements.btnReverter.style.display = "none";
+                } else {
+                    elements.btnValidar.style.display = "none";
+                    elements.btnInvalidar.style.display = "none";
+                    elements.btnReverter.style.display = "inline";
+                }
+
+                elements.detalhesModal.show();
+
+                // RESETAR MODAL AO FECHAR/ABRIR
+                if (document.getElementById("detalhesModal").style.display === "none") {
+                    document.getElementById("feedbackField").style.display = "none";
+                    document.getElementById("reversaoField").style.display = "none";
+                }
+            } else {
+                alert("Erro ao carregar detalhes do relatório.");
+            }
+        } catch (error) {
+            console.error("Erro ao carregar os detalhes do relatório:", error);
+        }
+    }
+
+    // CAMPO FEEDBACK
+    function abrirCampoFeedback(relatorioId) {
+        document.getElementById("feedbackField").style.display = "block";
+        elements.btnInvalidar.onclick = () => invalidarRelatorio(relatorioId);
+    }
+
+    // INVALIDAR RELATORIO + FEEDBACK
+    async function invalidarRelatorio(idRelatorio) {
+        const feedbackText = document.getElementById("feedbackText").value;
+        if (!feedbackText) {
+            alert("Feedback é obrigatório para invalidar o relatório.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('id_relatorio', idRelatorio);
+        formData.append('feedback', feedbackText);
+
+        try {
+            const response = await fetch(`../api/reportApi.php?action=invalidate`, { method: "POST", body: formData });
+            const result = await response.json();
+            if (result.status === "success") {
+                alert("Relatório invalidado com sucesso!");
+                elements.detalhesModal.hide();
+                await carregarRelatoriosSubmetidos();
+            } else {
+                alert(result.message);
+            }
+        } catch (error) {
+            console.error("Erro ao invalidar o relatório:", error);
+        }
+    }
+
+    // CAMPO JUSTIFICATIVA - REVERSÃO
+    function abrirCampoReversao(relatorioId) {
+        document.getElementById("reversaoField").style.display = "block";
+        elements.btnReverter.onclick = () => reverterValidacao(relatorioId);
+    }
+
+    // REVERTER VALIDAÇÃO COM JUSTIFICATIVA
+    async function reverterValidacao(idRelatorio) {
+        const justificativaReversao = document.getElementById("justificativaReversao").value;
+        if (!justificativaReversao) {
+            alert("Justificativa é obrigatória para reverter a validação.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('id_relatorio', idRelatorio);
+        formData.append('justificativa', justificativaReversao);
+
+        try {
+            const response = await fetch(`../api/reportApi.php?action=revert_validation`, { method: "POST", body: formData });
+            const result = await response.json();
+            if (result.status === "success") {
+                alert("Validação revertida com sucesso!");
+                elements.detalhesModal.hide();
+                await carregarRelatoriosSubmetidos();
+            } else {
+                alert(result.message);
+            }
+        } catch (error) {
+            console.error("Erro ao reverter a validação:", error);
+        }
+    }
+
+    // VALIDAR RELATÓRIO
+    async function validarRelatorio(idRelatorio) {
+        const formData = new FormData();
+        formData.append('id_relatorio', idRelatorio);
+
+        try {
+            const response = await fetch(`../api/reportApi.php?action=validate&id_relatorio=${idRelatorio}`, { method: "POST", body: formData});
+            const result = await response.json();
+            if (result.status === "success") {
+                alert("Relatório validado com sucesso!");
+                elements.detalhesModal.hide();
+                await carregarRelatoriosSubmetidos();
+            } else {
+                alert(result.message);
+            }
+        } catch (error) {
+            console.error("Erro ao validar o relatório:", error);
         }
     }
 
