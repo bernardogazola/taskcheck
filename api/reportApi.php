@@ -55,11 +55,26 @@ if ($method === "POST") {
                 json_return(["status" => "error", "message" => "ID do relatório não fornecido."]);
             }
             break;
+        case 'get_certificate':
+            if (isset($_GET['id_relatorio'])) {
+                obterCertificado($_GET['id_relatorio']);
+            } else {
+                json_return(["status" => "error", "message" => "ID do relatório não fornecido."]);
+            }
+            break;
         case 'list_by_professor':
             if ($_SESSION['tipo'] === 'professor') {
-                listarRelatoriosPorProfessor($id_usuario);
+                $categoriaId = isset($_GET['categoria']) ? intval($_GET['categoria']) : null;
+                listarRelatoriosPorProfessor($id_usuario, $categoriaId);
             } else {
                 json_return(["status" => "error", "message" => "Inválido."]);
+            }
+            break;
+        case 'verificar_alta_demanda':
+            if ($_SESSION['tipo'] === 'professor') {
+                verificarAltaDemandaValidacao($id_usuario);
+            } else {
+                json_return(["status" => "error", "message" => "Usuário não autorizado."]);
             }
             break;
         default:
@@ -131,16 +146,16 @@ function listarAtividadesEnviadas($id_usuario) {
     }
 }
 
-function listarRelatoriosPorProfessor($id_professor) {
+function listarRelatoriosPorProfessor($id_professor, $categoriaId = null) {
     $query = "
         SELECT 
             r.id, 
             r.nome AS atividade, 
             c.nome AS categoria, 
             cu.nome AS curso, 
-               u.nome AS aluno, 
-               r.data_realizacao, 
-               r.status
+            u.nome AS aluno, 
+            r.data_realizacao, 
+            r.status
         FROM relatorio_atividade r
         INNER JOIN categoria c ON r.id_categoria = c.id
         INNER JOIN curso cu ON c.id_curso = cu.id
@@ -149,6 +164,14 @@ function listarRelatoriosPorProfessor($id_professor) {
         INNER JOIN professor_curso pc ON pc.id_curso = cu.id
         WHERE pc.id_professor = $id_professor
     ";
+
+    // SE categoriaId FOI RECEBIDO -> FILTRAR
+    if ($categoriaId) {
+        $query .= " AND r.id_categoria = $categoriaId";
+    }
+
+    // ORDENAR DATA DE ENVIO - MAIS RECENTE
+    $query .= " ORDER BY r.data_envio DESC";
 
     $result = consultar_dado($query);
 
@@ -231,5 +254,48 @@ function obterFeedback($id_relatorio) {
     } else {
         json_return(["status" => "error", "message" => "Feedback não encontrado."]);
     }
+}
+
+// EM DESENVOLVIMENTO - TESTAR - NÃO FINALIZADO
+function obterCertificado($id_relatorio) {
+    $query = "SELECT certificado FROM relatorio_atividade WHERE id = $id_relatorio";
+    $result = consultar_dado($query);
+
+    if (is_array($result) && count($result) > 0) {
+        $certificado = $result[0]['certificado'];
+
+        header("Content-type: application/pdf");
+        header("Content-Disposition: inline; filename=certificado.pdf");
+
+        echo $certificado;
+    } else {
+        echo "deu ruim";
+    }
+
+//    if (is_array($result) && count($result) > 0) {
+//        $certificado = $result[0]['certificado'];
+//        json_return(["status" => "success", "certificado" => base64_encode($certificado)]);
+//    } else {
+//        json_return(["status" => "error", "message" => "Certificado não encontrado."]);
+//    }
+}
+
+// ALTA DEMANDA
+function verificarAltaDemandaValidacao($id_professor) {
+    global $connection;
+
+    $queryContagemPendentes = "
+        SELECT COUNT(*) AS pendentes 
+        FROM relatorio_atividade r
+        INNER JOIN categoria c ON r.id_categoria = c.id
+        INNER JOIN curso cu ON c.id_curso = cu.id
+        INNER JOIN professor_curso pc ON pc.id_curso = cu.id
+        WHERE pc.id_professor = $id_professor AND r.status = 'Aguardando validacao'
+    ";
+
+    $resultadoContagem = consultar_dado($queryContagemPendentes);
+    $quantidadePendentes = isset($resultadoContagem[0]['pendentes']) ? $resultadoContagem[0]['pendentes'] : 0;
+
+    json_return([ "status" => "success", "quantidadePendentes" => $quantidadePendentes ]);
 }
 ?>

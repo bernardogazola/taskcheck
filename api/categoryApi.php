@@ -156,7 +156,7 @@ function excluirCategoria($id_categoria) {
     }
 }
 
-// OBTER CATEGORIAS - ALUNO OU COORDENADOR
+// OBTER CATEGORIAS - ALUNO/COORDENADOR/PROFESSOR
 function obterCategorias($id_usuario, $tipo_usuario) {
     global $connection;
 
@@ -188,10 +188,26 @@ function obterCategorias($id_usuario, $tipo_usuario) {
         } else {
             json_return(["status" => "error", "message" => "Curso não encontrado para o coordenador."]);
         }
+    } elseif ($tipo_usuario === 'professor') {
+        $queryCursosProfessor = "SELECT id_curso FROM professor_curso WHERE id_professor = $id_usuario";
+        $cursosResult = consultar_dado($queryCursosProfessor);
+
+        if (is_array($cursosResult) && count($cursosResult) > 0) {
+            $ids_cursos = array_column($cursosResult, 'id_curso');
+            $ids_cursos_list = implode(",", $ids_cursos);
+
+            $queryCategorias = "SELECT id, nome, carga_horaria FROM categoria WHERE id_curso IN ($ids_cursos_list)";
+            $categorias = consultar_dado($queryCategorias);
+
+            json_return($categorias);
+        } else {
+            json_return(["status" => "error", "message" => "Nenhum curso associado ao professor encontrado."]);
+        }
     } else {
         json_return(["status" => "error", "message" => "Usuário não autorizado."]);
     }
 }
+
 
 function atualizarCategoria($dados) {
     global $connection;

@@ -10,6 +10,11 @@ if (!isset($_SESSION['id_usuario']) || $_SESSION['tipo'] != 'professor') {
 <?php require 'partials/header.php'; ?>
 <?php require 'partials/sidebar.php'; ?>
 <div class="content" id="content">
+    <!-- AVISO ALTA DEMANDA -->
+    <div id="avisoAltaDemanda" class="alert alert-warning" style="display: none;">
+        <strong>Aviso:</strong> Existem mais de 50 relatórios aguardando validação. Priorize o processo para reduzir a demanda.
+    </div>
+
     <!-- RELATÓRIOS SUBMETIDOS -->
     <div class="container mt-5" id="sent-reports-card" style="display: none;">
         <div class="card p-4">
@@ -21,10 +26,7 @@ if (!isset($_SESSION['id_usuario']) || $_SESSION['tipo'] != 'professor') {
                 </div>
                 <div class="col-md-3">
                     <select class="form-select" id="filtrarAtividades">
-                        <option selected>Filtrar</option>
-                        <option value="1">Opção 1</option>
-                        <option value="2">Opção 2</option>
-                        <option value="3">Opção 3</option>
+                        <!-- CATEGORIAS -->
                     </select>
                 </div>
                 <div class="col-md-3 text-end">

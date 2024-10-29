@@ -6,6 +6,8 @@ document.addEventListener("DOMContentLoaded", () => {
         viewReportsButton: document.getElementById("view-reports-card"),
         sentReportsCard: document.getElementById("sent-reports-card"),
         tabelaBody: document.querySelector("#sent-reports-card .table tbody"),
+        filtrarAtividadesDropdown: document.getElementById("filtrarAtividades"),
+        avisoAltaDemanda: document.getElementById("avisoAltaDemanda"),
         logoutButton: document.getElementById("logout-btn")
     }
 
@@ -15,6 +17,9 @@ document.addEventListener("DOMContentLoaded", () => {
         // CONFIGURAÇÃO DOS BOTÕES PRINCIPAIS
         elements.toggleSidebarButton.addEventListener("click", toggleSidebar);
         elements.viewReportsButton.addEventListener("click", mostrarCardRelatorios);
+
+        // FILTRAR RELATORIOS POR CATEGORIA PELO DROPDOWN
+        elements.filtrarAtividadesDropdown.addEventListener("change", filtrarRelatoriosPorCategoria);
 
         // LOGOUT
         elements.logoutButton.addEventListener("click", logout);
@@ -26,15 +31,30 @@ document.addEventListener("DOMContentLoaded", () => {
         elements.content.classList.toggle("sidebar-hidden");
     }
 
-    function mostrarCardRelatorios(event) {
+    async function mostrarCardRelatorios(event) {
         event.preventDefault();
         document.getElementById('sent-reports-card').style.display = 'block';
-        //document.getElementById('add-category-form').style.display = 'none';
-        //carregarCategorias();
+        await verificarAltaDemanda();
         carregarRelatoriosSubmetidos();
+        carregarCategorias();
     }
 
-    // Inicializa a função para carregar relatórios ao abrir o card
+    // ALTA DEMANDA
+    async function verificarAltaDemanda() {
+        try {
+            const response = await fetch("../api/reportApi.php?action=verificar_alta_demanda");
+            const data = await response.json();
+            if (data.status === "success" && data.quantidadePendentes > 50) {
+                elements.avisoAltaDemanda.style.display = "block";
+            } else {
+                elements.avisoAltaDemanda.style.display = "none";
+            }
+        } catch (error) {
+            console.error("Erro ao verificar alta demanda:", error);
+        }
+    }
+
+    // CARREGAR RELATÓRIOS
     async function carregarRelatoriosSubmetidos() {
         try {
             const response = await fetch("../api/reportApi.php?action=list_by_professor");
@@ -45,7 +65,20 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Exibir os relatórios na tabela
+    // FILTRAR RELATORIOS POR CATEGORIA
+    async function filtrarRelatoriosPorCategoria() {
+        const categoriaId = elements.filtrarAtividadesDropdown.value;
+
+        try {
+            const response = await fetch(`../api/reportApi.php?action=list_by_professor&categoria=${categoriaId}`);
+            const relatoriosFiltrados = await response.json();
+            exibirRelatoriosSubmetidos(relatoriosFiltrados);
+        } catch (error) {
+            console.error("Erro ao filtrar relatórios:", error);
+        }
+    }
+
+    // EXIBIR RELATÓRIOS
     function exibirRelatoriosSubmetidos(relatorios) {
         elements.tabelaBody.innerHTML = "";
 
@@ -84,7 +117,26 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Função para criar botões reutilizáveis
+    async function carregarCategorias() {
+        try {
+            const response = await fetch("../api/categoryApi.php?action=list");
+            const categorias = await response.json();
+
+            if (categorias && categorias.length) {
+                elements.filtrarAtividadesDropdown.innerHTML = `<option value="" selected>Filtrar</option>`;
+                categorias.forEach(categoria => {
+                    const option = document.createElement("option");
+                    option.value = categoria.id;
+                    option.textContent = categoria.nome;
+                    elements.filtrarAtividadesDropdown.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error("Erro ao carregar categorias:", error);
+        }
+    }
+
+    // CRIAR BOTÕES
     function criarBotao(texto, classe, onClick) {
         const button = document.createElement("button");
         button.classList.add("btn", "btn-sm", classe, "me-2");
@@ -93,25 +145,12 @@ document.addEventListener("DOMContentLoaded", () => {
         return button;
     }
 
-    // Visualizar o certificado
+    // VISUALIZAR CERT EM PDF
     async function visualizarCertificado(idRelatorio) {
-        try {
-            const response = await fetch(`../api/reportApi.php?action=get_certificate&id_relatorio=${idRelatorio}`);
-            const data = await response.json();
-
-            if (data.status === "success") {
-                const blob = new Blob([data.certificado], { type: "application/pdf" });
-                const url = URL.createObjectURL(blob);
-                window.open(url);
-            } else {
-                alert(data.message || "Erro ao carregar certificado");
-            }
-        } catch (error) {
-            console.error("Erro ao carregar o certificado:", error);
-        }
+        window.open(`../api/reportApi.php?action=get_certificate&id_relatorio=${idRelatorio}`, '_blank');
     }
 
-    // Visualizar feedback
+    // VISUALIZAR FEEDBACK -- EM DESENVOLVIMENTE - NÃO FINALIZADO
     async function visualizarFeedback(idRelatorio) {
         try {
             const response = await fetch(`../api/reportApi.php?action=feedback&id_relatorio=${idRelatorio}`);
