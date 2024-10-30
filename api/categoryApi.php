@@ -81,8 +81,8 @@ function adicionarCategoria($dados) {
     if (is_array($cursoResult) && count($cursoResult) > 0) {
         $id_curso = $cursoResult[0]['id_curso_responsavel'];
 
-        $colunas = "nome, carga_horaria, descricao, id_curso, id_coordenador";
-        $valores = "'$nome', $carga_horaria, '$descricao', $id_curso, $id_coordenador";
+        $colunas = "nome, carga_horaria, descricao, id_curso";
+        $valores = "'$nome', $carga_horaria, '$descricao', $id_curso";
 
         $resultado = inserir_dado("categoria", $colunas, $valores);
 
