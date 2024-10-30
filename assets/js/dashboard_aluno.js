@@ -306,7 +306,23 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function visualizarCertificado(idRelatorio) {
-        window.open(`../api/reportApi.php?action=get_certificate&id_relatorio=${idRelatorio}`, '_blank');
+        try {
+            const response = await fetch(`../api/reportApi.php?action=get_certificate&id_relatorio=${idRelatorio}`);
+
+            // VERIFICAR SE É JSON
+            const contentType = response.headers.get("content-type");
+
+            if (contentType && contentType.includes("application/json")) {
+                const certificado = await response.json();
+                if (certificado.status === "error") {
+                    alert(certificado.message);
+                }
+            } else {
+                window.open(`../api/reportApi.php?action=get_certificate&id_relatorio=${idRelatorio}`, '_blank');
+            }
+        } catch (error) {
+            console.error("Erro ao visualizar certificado:", error);
+        }
     }
 
     // LOGOUT

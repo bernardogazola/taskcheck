@@ -313,21 +313,22 @@ function obterCertificado($id_relatorio) {
     if (is_array($result) && count($result) > 0) {
         $certificado = $result[0]['certificado'];
 
-        header("Content-type: application/pdf");
-        header("Content-Disposition: inline; filename=certificado.pdf");
-
-        echo $certificado;
+        // Verificar se o certificado começa com a assinatura PDF ("%PDF")
+        $pdfHeader = substr($certificado, 0, 4);
+        if ($pdfHeader === "%PDF") {
+            header("Content-Type: application/pdf");
+            header("Content-Disposition: inline; filename=certificado.pdf");
+            echo $certificado;
+        } else {
+            header('Content-Type: application/json');
+            echo json_encode(["status" => "error", "message" => "Este certificado está corrompido. Tente novamente mais tarde."]);
+        }
     } else {
-        echo "deu ruim";
+        header('Content-Type: application/json');
+        echo json_encode(["status" => "error", "message" => "Certificado não encontrado"]);
     }
-
-//    if (is_array($result) && count($result) > 0) {
-//        $certificado = $result[0]['certificado'];
-//        json_return(["status" => "success", "certificado" => base64_encode($certificado)]);
-//    } else {
-//        json_return(["status" => "error", "message" => "Certificado não encontrado."]);
-//    }
 }
+
 
 // ALTA DEMANDA
 function verificarAltaDemandaValidacao($id_professor) {

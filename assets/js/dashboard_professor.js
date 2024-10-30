@@ -146,7 +146,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // VISUALIZAR CERT EM PDF
     async function visualizarCertificado(idRelatorio) {
-        window.open(`../api/reportApi.php?action=get_certificate&id_relatorio=${idRelatorio}`, '_blank');
+        try {
+            const response = await fetch(`../api/reportApi.php?action=get_certificate&id_relatorio=${idRelatorio}`);
+
+            // VERIFICAR SE É JSON
+            const contentType = response.headers.get("content-type");
+
+            if (contentType && contentType.includes("application/json")) {
+                const certificado = await response.json();
+                if (certificado.status === "error") {
+                    alert(certificado.message);
+                }
+            } else {
+                window.open(`../api/reportApi.php?action=get_certificate&id_relatorio=${idRelatorio}`, '_blank');
+            }
+        } catch (error) {
+            console.error("Erro ao visualizar certificado:", error);
+        }
     }
 
     // VISUALIZAR FEEDBACK -- EM DESENVOLVIMENTO - NÃO FINALIZADO
@@ -287,12 +303,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // VALIDAR RELATÓRIO
     async function validarRelatorio(idRelatorio) {
-        const formData = new FormData();
-        formData.append('id_relatorio', idRelatorio);
-
         try {
-            const response = await fetch(`../api/reportApi.php?action=validate&id_relatorio=${idRelatorio}`, { method: "POST", body: formData});
+            // VERIFICAR SE O CERTIFICADO ESTÁ CORROMPIDO
+            const certificadoResponse = await fetch(`../api/reportApi.php?action=get_certificate&id_relatorio=${idRelatorio}`);
+            const contentType = certificadoResponse.headers.get("content-type");
+
+            if (contentType && contentType.includes("application/json")) {
+                const certificado = await certificadoResponse.json();
+                if (certificado.status === "error") {
+                    alert("Esse certificado está corrompido. O relatório não pode ser validado.");
+                    return; // BLOQUEIA A VALIDAÇÃO
+                }
+            }
+
+            // CERTIFICADO VÁLIDO
+            const formData = new FormData();
+            formData.append('id_relatorio', idRelatorio);
+
+            const response = await fetch(`../api/reportApi.php?action=validate&id_relatorio=${idRelatorio}`, { method: "POST", body: formData });
             const result = await response.json();
+
             if (result.status === "success") {
                 alert("Relatório validado com sucesso!");
                 elements.detalhesModal.hide();
