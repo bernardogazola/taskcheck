@@ -220,6 +220,22 @@ document.addEventListener("DOMContentLoaded", () => {
                     elements.btnReverter.style.display = "inline";
                 }
 
+                // BOTÃO HISTORICO FEEDBACK
+                const historicoFeedbackButton = document.getElementById("btnHistoricoFeedback");
+                historicoFeedbackButton.style.display = "none";
+
+                const feedbackHistoricoContainer = document.getElementById("feedbackHistorico");
+                feedbackHistoricoContainer.style.display = "none";
+                historicoFeedbackButton.onclick = () => { toggleFeedbackHistory(feedbackHistoricoContainer); carregarFeedbackHistorico(relatorioId); }
+
+                // VERIFICAR SE POSSUI HISTORICO DE FEEDBACK
+                const historicoResponse = await fetch(`../api/reportApi.php?action=get_feedback_history&id_relatorio=${relatorioId}`);
+                const historico = await historicoResponse.json();
+
+                if (historico && historico.length > 0) {
+                    historicoFeedbackButton.style.display = "inline";
+                }
+
                 elements.detalhesModal.show();
 
                 // RESETAR MODAL AO FECHAR/ABRIR
@@ -232,6 +248,15 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         } catch (error) {
             console.error("Erro ao carregar os detalhes do relatório:", error);
+        }
+    }
+
+    // MOSTRAR/ESCONDER HISTORICO FEEDBACK
+    async function toggleFeedbackHistory(container) {
+        if (container.style.display === "block") {
+            container.style.display = "none";
+        } else {
+            container.style.display = "block";
         }
     }
 
@@ -332,6 +357,41 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         } catch (error) {
             console.error("Erro ao validar o relatório:", error);
+        }
+    }
+
+    async function carregarFeedbackHistorico(idRelatorio) {
+        try {
+            const response = await fetch(`../api/reportApi.php?action=get_feedback_history&id_relatorio=${idRelatorio}`);
+            const historicoFeedback = await response.json();
+
+            const accordionContainer = document.getElementById("accordionFeedbackHistorico");
+            accordionContainer.innerHTML = "";
+
+            if (historicoFeedback.length > 0) {
+
+                historicoFeedback.forEach((feedback, index) => {
+                    const feedbackItem = `
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading${index}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${index}" aria-expanded="false" aria-controls="collapse${index}">
+                                Versão ${feedback.versao} - ${feedback.data_envio}
+                            </button>
+                        </h2>
+                        <div id="collapse${index}" class="accordion-collapse collapse" aria-labelledby="heading${index}" data-bs-parent="#accordionFeedbackHistorico">
+                            <div class="accordion-body">
+                                ${feedback.texto_feedback}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                    accordionContainer.insertAdjacentHTML('beforeend', feedbackItem);
+                });
+            } else {
+                alert("Nenhum histórico de feedback encontrado.");
+            }
+        } catch (error) {
+            console.error("Erro ao carregar histórico de feedback:", error);
         }
     }
 

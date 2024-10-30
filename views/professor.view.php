@@ -70,6 +70,12 @@ if (!isset($_SESSION['id_usuario']) || $_SESSION['tipo'] != 'professor') {
                         <label for="justificativaReversao" class="form-label">Justificativa para Reversão:</label>
                         <textarea id="justificativaReversao" class="form-control" rows="3"></textarea>
                     </div>
+
+                    <!-- HISTÓRICO DE FEEDBACK -->
+                    <button id="btnHistoricoFeedback" class="btn btn-secondary mt-3 mb-3" style="display: none;">Histórico Feedback</button>
+                    <div id="feedbackHistorico" style="display: none;">
+                        <div class="accordion" id="accordionFeedbackHistorico"></div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button id="btnCertificado" class="btn btn-secondary">Certificado</button>

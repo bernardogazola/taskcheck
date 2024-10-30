@@ -69,6 +69,13 @@ if ($method === "POST") {
                 json_return(["status" => "error", "message" => "ID do relatório não fornecido."]);
             }
             break;
+        case 'get_feedback_history':
+            if (isset($_GET['id_relatorio'])) {
+                obterFeedbackHistorico($_GET['id_relatorio']);
+            } else {
+                json_return(["status" => "error", "message" => "ID do relatório não fornecido."]);
+            }
+            break;
         case 'get_activity':
             if (isset($_GET['id_relatorio'])) {
                 obterAtividade($_GET['id_relatorio']);
@@ -220,11 +227,15 @@ function atualizarAtividade($dados) {
     $id_categoria = mysqli_real_escape_string($connection, $dados['id_categoria']);
     $texto_reflexao = mysqli_real_escape_string($connection, $dados['texto_reflexao']);
 
+    // REGISTRAR HISTORICO DO FEEDBACK ATUAL
+    adicionarFeedbackHistorico($id_relatorio);
+
     // SE A ATIVIDADE ESTIVER EM "RECATEGORIZACAO" ATUALIZA PARA AGUARDANDO VALIDACAO
     $status = "Aguardando validacao";
     if ($dados['status'] === "Recategorizacao") {
         $status = "Aguardando validacao";
     }
+
 
     $certificado = null;
     if (isset($_FILES['certificado']) && $_FILES['certificado']['error'] === UPLOAD_ERR_OK) {
@@ -349,24 +360,30 @@ function verificarAltaDemandaValidacao($id_professor) {
     json_return([ "status" => "success", "quantidadePendentes" => $quantidadePendentes ]);
 }
 
-// REVER - SEM UTILIZAÇÃO POR ENQUANTO
-function adicionarFeedbackHistorico($id_feedback, $id_relatorio, $texto_feedback, $id_professor) {
-    $queryUltimaVersao = "
-        SELECT COALESCE(MAX(versao), 0) + 1 AS nova_versao
-        FROM feedback_historico
-        WHERE id_relatorio = $id_relatorio
-    ";
-    $ultimaVersaoResult = consultar_dado($queryUltimaVersao);
-    $novaVersao = $ultimaVersaoResult[0]['nova_versao'];
+function adicionarFeedbackHistorico($id_relatorio, $id_professor = null) {
+    // FEEDBACK ATUAL
+    $queryFeedback = "SELECT * FROM feedback WHERE id_relatorio = $id_relatorio";
+    $feedbackAtual = consultar_dado($queryFeedback);
 
-    // Inserir o novo feedback no histórico
-    $colunas = "id_feedback, id_relatorio, texto_feedback, data_envio, id_professor, versao";
-    $valores = "$id_feedback, $id_relatorio, '$texto_feedback', NOW(), $id_professor, $novaVersao";
+    if (!empty($feedbackAtual)) {
+        // ADD FEEDBACK ATUAL NO HISTORICO FEEDBACK
+        $id_feedback = $feedbackAtual[0]['id'];
+        $texto_feedback = $feedbackAtual[0]['texto_feedback'];
+        $data_envio = $feedbackAtual[0]['data_envio'];
 
-    $resultado = inserir_dado("feedback_historico", $colunas, $valores);
+        if ($id_professor === null) {
+            $id_professor = $feedbackAtual[0]['id_professor'];
+        }
 
-    if ($resultado['status'] !== 'success') {
-        json_return(["status" => "error", "message" => "Erro ao adicionar feedback ao histórico: " . $resultado['message']]);
+        $versao = 1 + (int) consultar_dado("SELECT MAX(versao) AS max_versao FROM feedback_historico WHERE id_relatorio = $id_relatorio")[0]['max_versao'];
+
+        $atributosHistorico = "id_feedback, id_relatorio, texto_feedback, data_envio, id_professor, versao";
+        $valoresHistorico = "$id_feedback, $id_relatorio, '$texto_feedback', '$data_envio', $id_professor, $versao";
+
+        inserir_dado("feedback_historico", $atributosHistorico, $valoresHistorico);
+
+        // DELETAR FEEDBACK ATUAL APOS INSERCAO HISTORICO
+        deletar_dado("feedback", "id = $id_feedback");
     }
 }
 
@@ -416,25 +433,7 @@ function reverterValidacao($id_relatorio) {
     $justificativa = mysqli_real_escape_string($connection, $_POST['justificativa']);
     $id_professor = $_SESSION['id_usuario'];
 
-    // FEEDBACK ATUAL
-    $queryFeedback = "SELECT * FROM feedback WHERE id_relatorio = $id_relatorio";
-    $feedbackAtual = consultar_dado($queryFeedback);
-
-    if (!empty($feedbackAtual)) {
-        // ADD FEEDBACK ATUAL NO HISTORICO FEEDBACK
-        $id_feedback = $feedbackAtual[0]['id'];
-        $texto_feedback = $feedbackAtual[0]['texto_feedback'];
-        $data_envio = $feedbackAtual[0]['data_envio'];
-        $versao = 1 + (int) consultar_dado("SELECT MAX(versao) AS max_versao FROM feedback_historico WHERE id_relatorio = $id_relatorio")[0]['max_versao'];
-
-        $atributosHistorico = "id_feedback, id_relatorio, texto_feedback, data_envio, id_professor, versao";
-        $valoresHistorico = "$id_feedback, $id_relatorio, '$texto_feedback', '$data_envio', $id_professor, $versao";
-
-        inserir_dado("feedback_historico", $atributosHistorico, $valoresHistorico);
-
-        // DELETAR FEEDBACK ATUAL APOS INSERCAO HISTORICO
-        deletar_dado("feedback", "id = $id_feedback");
-    }
+    adicionarFeedbackHistorico($id_relatorio, $id_professor);
 
     $atributosReversao = "id_relatorio, justificativa, id_professor";
     $valoresReversao = "$id_relatorio, '$justificativa', $id_professor";
@@ -445,5 +444,22 @@ function reverterValidacao($id_relatorio) {
     atualizar_dado("relatorio_atividade", $atributosRelatorio, $condicaoRelatorio);
 
     json_return(["status" => "success", "message" => "Validação revertida com sucesso."]);
+}
+
+function obterFeedbackHistorico($id_relatorio) {
+    $query = "
+        SELECT texto_feedback, data_envio, versao
+        FROM feedback_historico
+        WHERE id_relatorio = $id_relatorio
+        ORDER BY versao DESC
+    ";
+
+    $historico = consultar_dado($query);
+
+    if (is_array($historico) && count($historico) > 0) {
+        json_return($historico);
+    } else {
+        json_return([]);
+    }
 }
 ?>
