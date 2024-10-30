@@ -141,8 +141,8 @@ if (!isset($_SESSION['id_usuario']) || $_SESSION['tipo'] != 'aluno') {
                         <textarea class="form-control" id="edit-descricao" rows="3" placeholder="Informe a reflexão"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label for="edit-certificado" class="form-label">Certificado (já anexado)</label>
-                        <input type="file" class="form-control" id="edit-certificado" disabled />
+                        <label for="edit-certificado" class="form-label">Certificado</label>
+                        <input type="file" class="form-control" id="edit-certificado" accept="application/pdf"/>
                     </div>
                     <button type="submit" class="btn btn-primary">Salvar alterações</button>
                 </form>

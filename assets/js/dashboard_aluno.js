@@ -97,6 +97,11 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        if (certificado && certificado.type !== "application/pdf") {
+            messageContainer.innerHTML = `<p class="text-danger">Apenas arquivos PDF são permitidos.</p>`;
+            return;
+        }
+
         const formData = new FormData();
         formData.append('nome', nome);
         formData.append('data_realizacao', data_realizacao);
@@ -171,9 +176,12 @@ document.addEventListener("DOMContentLoaded", () => {
             const divAcoes = document.createElement("div");
             divAcoes.classList.add("d-flex");
 
+            const btnCertificado = criarBotao("Certificado", "btn-primary", () => visualizarCertificado(atividade.id), 'eye');
+            divAcoes.appendChild(btnCertificado);
+
             // EDITAR
             if (["Aguardando validacao", "Invalido", "Recategorizacao"].includes(atividade.status)) {
-                const btnEditar = criarBotao("Editar", "btn-primary", () => { carregarCategorias(); editarAtividade(atividade.id);});
+                const btnEditar = criarBotao("Editar", "btn-primary", () => { carregarCategorias(); editarAtividade(atividade.id);}, 'edit');
                 divAcoes.appendChild(btnEditar);
             }
 
@@ -190,10 +198,18 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // CRIAR BOTÕES (BOTÕES DE AÇÕES - EDITAR/FEEDBACK)
-    function criarBotao(texto, classe, onClick) {
+    function criarBotao(texto, classe, onClick, icone) {
         const button = document.createElement('button');
         button.classList.add('btn', 'btn-sm', classe, 'me-2');
-        button.textContent = texto;
+
+        if (icone) {
+            const icon = document.createElement('i');
+            icon.classList.add('fa', `fa-${icone}`);
+            button.appendChild(icon);
+        }
+
+        const textNode = document.createTextNode(` ${texto}`);
+        button.appendChild(textNode);
         button.addEventListener('click', onClick);
         return button;
     }
@@ -210,6 +226,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById('edit-data').value = atividade.data_realizacao;
                 document.getElementById('edit-descricao').value = atividade.texto_reflexao;
                 document.getElementById('edit-categoria').value = atividade.id_categoria;
+                document.getElementById('edit-certificado').value = "";
 
                 const editModal = new bootstrap.Modal(document.getElementById('editActivityModal'));
                 editModal.show();
@@ -230,6 +247,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const data_realizacao = document.getElementById('edit-data').value;
         const id_categoria = document.getElementById('edit-categoria').value;
         const texto_reflexao = document.getElementById('edit-descricao').value;
+        const certificado = document.getElementById('edit-certificado').files[0];
 
         // SE A ATIVIDADE ESTIVER SENDO RECATEGORIZADA, ATUALIZA PARA AGUARDANDO VALIDACAO
         const status = "Aguardando validacao";
@@ -241,6 +259,10 @@ document.addEventListener("DOMContentLoaded", () => {
         formData.append('id_categoria', id_categoria);
         formData.append('texto_reflexao', texto_reflexao);
         formData.append('status', status);
+
+        if (certificado) {
+            formData.append('certificado', certificado);
+        }
 
         try {
             const response = await fetch('../api/reportApi.php?action=update', {
@@ -281,6 +303,10 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (error) {
             console.error("Erro ao carregar o feedback:", error);
         }
+    }
+
+    async function visualizarCertificado(idRelatorio) {
+        window.open(`../api/reportApi.php?action=get_certificate&id_relatorio=${idRelatorio}`, '_blank');
     }
 
     // LOGOUT

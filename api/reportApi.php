@@ -126,8 +126,16 @@ function adicionarAtividade($dados) {
     $data_realizacao_formatada = date_format(date_create_from_format('d/m/Y', $data_realizacao), 'Y-m-d');
 
     if (isset($_FILES['certificado']) && $_FILES['certificado']['error'] === UPLOAD_ERR_OK) {
-        $certificado = file_get_contents($_FILES['certificado']['tmp_name']);
-        $certificado = mysqli_real_escape_string($connection, $certificado);
+        $fileType = $_FILES['certificado']['type'];
+        $fileExtension = pathinfo($_FILES['certificado']['name'], PATHINFO_EXTENSION);
+
+        if ($fileType === 'application/pdf' && strtolower($fileExtension) === 'pdf') {
+            $certificado = file_get_contents($_FILES['certificado']['tmp_name']);
+            $certificado = mysqli_real_escape_string($connection, $certificado);
+        } else {
+            json_return(["status" => "error", "message" => "Apenas arquivos PDF são permitidos."]);
+            return;
+        }
     } else {
         $certificado = null;
     }
@@ -218,6 +226,20 @@ function atualizarAtividade($dados) {
         $status = "Aguardando validacao";
     }
 
+    $certificado = null;
+    if (isset($_FILES['certificado']) && $_FILES['certificado']['error'] === UPLOAD_ERR_OK) {
+        $fileType = $_FILES['certificado']['type'];
+        $fileExtension = pathinfo($_FILES['certificado']['name'], PATHINFO_EXTENSION);
+
+        if ($fileType === 'application/pdf' && strtolower($fileExtension) === 'pdf') {
+            $certificado = file_get_contents($_FILES['certificado']['tmp_name']);
+            $certificado = mysqli_real_escape_string($connection, $certificado);
+        } else {
+            json_return(["status" => "error", "message" => "Apenas arquivos PDF são permitidos."]);
+            return;
+        }
+    }
+
     $atributos = "
         nome = '$nome', 
         data_realizacao = '$data_realizacao', 
@@ -225,6 +247,11 @@ function atualizarAtividade($dados) {
         texto_reflexao = '$texto_reflexao', 
         status = '$status'
     ";
+
+    if ($certificado !== null) {
+        $atributos .= ", certificado = '$certificado'";
+    }
+
     $condicao = "id = $id_relatorio";
 
     $resultado = atualizar_dado('relatorio_atividade', $atributos, $condicao);
