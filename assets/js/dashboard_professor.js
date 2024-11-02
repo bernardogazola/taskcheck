@@ -122,7 +122,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const categorias = await response.json();
 
             if (categorias && categorias.length) {
-                elements.filtrarAtividadesDropdown.innerHTML = `<option value="" selected>Filtrar</option>`;
+                elements.filtrarAtividadesDropdown.innerHTML = `<option value="" selected>Filtrar por categoria</option>`;
                 categorias.forEach(categoria => {
                     const option = document.createElement("option");
                     option.value = categoria.id;
@@ -165,22 +165,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // VISUALIZAR FEEDBACK -- EM DESENVOLVIMENTO - NÃO FINALIZADO
-    async function visualizarFeedback(idRelatorio) {
-        try {
-            const response = await fetch(`../api/reportApi.php?action=feedback&id_relatorio=${idRelatorio}`);
-            const feedback = await response.json();
-
-            if (feedback.status !== "error") {
-                alert(`Feedback: ${feedback.texto_feedback}`);
-            } else {
-                console.error(feedback.message);
-            }
-        } catch (error) {
-            console.error("Erro ao carregar o feedback:", error);
-        }
-    }
-
     async function obterCategoria(categoriaId) {
         try {
             const response = await fetch(`../api/categoryApi.php?action=get&id=${categoriaId}`);
@@ -206,7 +190,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById("detalheReflexao").textContent = relatorio.texto_reflexao;
 
                 elements.btnCertificado.onclick = () => visualizarCertificado(relatorioId);
-                elements.btnValidar.onclick = () => validarRelatorio(relatorioId);
+                elements.btnValidar.onclick = () => abrirCampoHoras(relatorioId);
                 elements.btnInvalidar.onclick = () => abrirCampoFeedback(relatorioId);
                 elements.btnReverter.onclick = () => abrirCampoReversao(relatorioId);
 
@@ -226,7 +210,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const feedbackHistoricoContainer = document.getElementById("feedbackHistorico");
                 feedbackHistoricoContainer.style.display = "none";
-                historicoFeedbackButton.onclick = () => { toggleFeedbackHistory(feedbackHistoricoContainer); carregarFeedbackHistorico(relatorioId); }
+                historicoFeedbackButton.onclick = () => { toggleHistory(feedbackHistoricoContainer); carregarFeedbackHistorico(relatorioId); }
 
                 // VERIFICAR SE POSSUI HISTORICO DE FEEDBACK
                 const historicoResponse = await fetch(`../api/reportApi.php?action=get_feedback_history&id_relatorio=${relatorioId}`);
@@ -236,12 +220,44 @@ document.addEventListener("DOMContentLoaded", () => {
                     historicoFeedbackButton.style.display = "inline";
                 }
 
+                // BOTÃO HISTORICO ALTERACOES
+                const historicoAlteracoesButton = document.getElementById("btnHistoricoAlteracoes");
+                historicoAlteracoesButton.style.display = "none";
+
+                const historicoAlteracoesContainer = document.getElementById("alteracoesHistorico");
+                historicoAlteracoesContainer.style.display = "none";
+                historicoAlteracoesButton.onclick = () => { toggleHistory(historicoAlteracoesContainer); carregarHistoricoAlteracoes(relatorioId); }
+
+                // VERIFICAR SE POSSUI HISTORICO DE ALTERACOES
+                const responseAlteracoes = await fetch(`../api/reportApi.php?action=get_alteracao_history&id_relatorio=${relatorioId}`);
+                const historicoAlteracoes = await responseAlteracoes.json();
+
+                if (historicoAlteracoes && historicoAlteracoes.length > 0) {
+                    historicoAlteracoesButton.style.display = "inline";
+                }
+
+                // FEEDBACK ATUAL
+                const feedbackAtualButton = document.getElementById("btnFeedbackAtual");
+                feedbackAtualButton.style.display = "none";
+
+                const feedbackAtualContainer = document.getElementById("feedbackAtual");
+                feedbackAtualContainer.style.display = "none";
+                feedbackAtualButton.onclick = () => { toggleHistory(feedbackAtualContainer); carregarFeedbackAtual(relatorioId); }
+
+                if (relatorio.status === "Invalido") {
+                    feedbackAtualButton.style.display = "inline";
+                }
+
                 elements.detalhesModal.show();
 
                 // RESETAR MODAL AO FECHAR/ABRIR
                 if (document.getElementById("detalhesModal").style.display === "none") {
                     document.getElementById("feedbackField").style.display = "none";
                     document.getElementById("reversaoField").style.display = "none";
+                    document.getElementById("horasField").style.display = "none";
+                    document.getElementById("feedbackHistorico").style.display = "none";
+                    document.getElementById("alteracoesHistorico").style.display = "none";
+                    document.getElementById("feedbackAtual").style.display = "none";
                 }
             } else {
                 alert("Erro ao carregar detalhes do relatório.");
@@ -252,7 +268,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // MOSTRAR/ESCONDER HISTORICO FEEDBACK
-    async function toggleFeedbackHistory(container) {
+    async function toggleHistory(container) {
         if (container.style.display === "block") {
             container.style.display = "none";
         } else {
@@ -326,6 +342,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    function abrirCampoHoras(relatorioId) {
+        document.getElementById("horasField").style.display = "block";
+        elements.btnValidar.onclick = () => validarRelatorio(relatorioId);
+    }
+
     // VALIDAR RELATÓRIO
     async function validarRelatorio(idRelatorio) {
         try {
@@ -342,8 +363,15 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             // CERTIFICADO VÁLIDO
+            const horasValue = document.getElementById("horasValidacao").value;
+            if (!horasValue) {
+                alert("Carga horária é obrigatória para validar o relatório.");
+                return;
+            }
+
             const formData = new FormData();
             formData.append('id_relatorio', idRelatorio);
+            formData.append('horas_validadas', horasValue);
 
             const response = await fetch(`../api/reportApi.php?action=validate&id_relatorio=${idRelatorio}`, { method: "POST", body: formData });
             const result = await response.json();
@@ -392,6 +420,77 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         } catch (error) {
             console.error("Erro ao carregar histórico de feedback:", error);
+        }
+    }
+
+    async function carregarHistoricoAlteracoes(idRelatorio) {
+        try {
+            const response = await fetch(`../api/reportApi.php?action=get_alteracao_history&id_relatorio=${idRelatorio}`);
+            const historico = await response.json();
+
+            const accordionContainer = document.getElementById("accordionAlteracoesHistorico");
+            accordionContainer.innerHTML = "";
+
+            if (historico.length > 0) {
+                //document.getElementById("alteracoesHistorico").style.display = "block";
+                historico.forEach((alteracao, index) => {
+                    const alteracaoItem = `
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading${index}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${index}" aria-expanded="false" aria-controls="collapse${index}">
+                                Alteração em ${alteracao.data_alteracao}
+                            </button>
+                        </h2>
+                        <div id="collapse${index}" class="accordion-collapse collapse" aria-labelledby="heading${index}" data-bs-parent="#accordionAlteracoesHistorico">
+                            <div class="accordion-body">
+                                <span>Alteração realizada por aluno.</span><br>
+                                <strong>Relatório anterior:</strong><br>
+                                <strong>Nome:</strong> ${alteracao.nome_anterior}<br>
+                                <strong>Reflexão:</strong> ${alteracao.texto_reflexao_anterior}<br>
+                                <strong>Data de Realização:</strong> ${alteracao.data_realizacao_anterior}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                    accordionContainer.insertAdjacentHTML('beforeend', alteracaoItem);
+                });
+            } else {
+                alert("Nenhum histórico de alterações encontrado.");
+            }
+        } catch (error) {
+            console.error("Erro ao carregar histórico de alterações:", error);
+        }
+    }
+
+    async function carregarFeedbackAtual(idRelatorio) {
+        try {
+            const response = await fetch(`../api/reportApi.php?action=feedback&id_relatorio=${idRelatorio}`);
+            const feedbackatual = await response.json();
+
+            const accordionContainer = document.getElementById("accordionFeedbackAtual");
+            accordionContainer.innerHTML = "";
+
+            if (!feedbackatual.status) {
+                const feedbackItem = `
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingfeed1">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsefeed1" aria-expanded="false" aria-controls="collapsefeed1">
+                                Feedback atual
+                            </button>
+                        </h2>
+                        <div id="collapsefeed1" class="accordion-collapse collapse" aria-labelledby="headingfeed1" data-bs-parent="#accordionFeedbackAtual">
+                            <div class="accordion-body">
+                                <span>${feedbackatual.texto_feedback}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                accordionContainer.insertAdjacentHTML('beforeend', feedbackItem);
+            } else {
+                alert("Nenhum feedback encontrado.");
+            }
+        } catch (error) {
+            console.error("Erro ao carregar feedback atual:", error);
         }
     }
 

@@ -56,19 +56,10 @@ if (!isset($_SESSION['id_usuario']) || $_SESSION['tipo'] != 'aluno') {
             <h2 class="card-title mb-4">Atividades submetidas</h2>
 
             <div class="row mb-4">
-                <div class="col-md-6">
-                    <input type="text" class="form-control" id="pesquisarAtividades" placeholder="Pesquisar">
-                </div>
                 <div class="col-md-3">
                     <select class="form-select" id="filtrarAtividades">
-                        <option selected>Filtrar</option>
-                        <option value="1">Opção 1</option>
-                        <option value="2">Opção 2</option>
-                        <option value="3">Opção 3</option>
+                        <!-- CATEGORIAS -->
                     </select>
-                </div>
-                <div class="col-md-3 text-end">
-                    <button class="btn btn-primary">Filtrar</button>
                 </div>
             </div>
 

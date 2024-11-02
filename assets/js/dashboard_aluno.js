@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
         activityForm: document.getElementById('activity-form'),
         sentActivitiesCard: document.getElementById('sent-activities-card'),
         tabelaBody: document.querySelector(".table tbody"),
+        filtrarAtividadesDropdown: document.getElementById("filtrarAtividades"),
         addActivityForm: document.querySelector('#activity-form form'),
         editActivityForm: document.getElementById("edit-activity-form"),
         messageContainer: document.getElementById('response-message'),
@@ -23,6 +24,9 @@ document.addEventListener("DOMContentLoaded", () => {
         elements.toggleSidebarButton.addEventListener("click", toggleSidebar);
         elements.addActivityButton.addEventListener("click", mostrarFormularioAtividade);
         elements.viewSentActivitiesButton.addEventListener("click", mostrarCardAtividadesEnviadas);
+
+        // FILTRAR RELATORIOS POR CATEGORIA PELO DROPDOWN
+        elements.filtrarAtividadesDropdown.addEventListener("change", filtrarRelatoriosPorCategoria);
 
         // SUBMISSÃO DO FORMULÁRIO - ADICIONAR ATIVIDADE E EDICAO ATIVIDADE
         elements.addActivityForm.addEventListener("submit", adicionarAtividade);
@@ -55,6 +59,20 @@ document.addEventListener("DOMContentLoaded", () => {
         elements.activityForm.style.display = 'none';
         elements.sentActivitiesCard.style.display = 'block';
         carregarAtividadesEnviadas();
+        carregarCategorias();
+    }
+
+    // FILTRAR RELATORIOS POR CATEGORIA
+    async function filtrarRelatoriosPorCategoria() {
+        const categoriaId = elements.filtrarAtividadesDropdown.value;
+
+        try {
+            const response = await fetch(`../api/reportApi.php?action=list_by_aluno&categoria=${categoriaId}`);
+            const relatoriosFiltrados = await response.json();
+            exibirAtividadesEnviadas(relatoriosFiltrados);
+        } catch (error) {
+            console.error("Erro ao filtrar relatórios:", error);
+        }
     }
 
     // CARREGAR CATEGORIAS PARA O DROPDOWN
@@ -69,12 +87,15 @@ document.addEventListener("DOMContentLoaded", () => {
             categoriaDropdown.innerHTML = '<option selected>Selecionar categoria</option>';
             categoriaEditDropdown.innerHTML = '<option selected>Selecionar categoria</option>';
 
+            elements.filtrarAtividadesDropdown.innerHTML = `<option value="" selected>Filtrar por categoria</option>`;
+
             categorias.forEach(categoria => {
                 const option = document.createElement("option");
                 option.value = categoria.id;
                 option.text = categoria.nome;
                 categoriaDropdown.add(option.cloneNode(true));
                 categoriaEditDropdown.add(option);
+                elements.filtrarAtividadesDropdown.add(option);
             });
         } catch (error) {
             console.error("Erro ao carregar categorias:", error);

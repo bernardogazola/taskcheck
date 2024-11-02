@@ -70,11 +70,28 @@ if (!isset($_SESSION['id_usuario']) || $_SESSION['tipo'] != 'professor') {
                         <label for="justificativaReversao" class="form-label">Justificativa para Reversão:</label>
                         <textarea id="justificativaReversao" class="form-control" rows="3"></textarea>
                     </div>
+                    <!-- CAMPO HORAS VALIDADAS -->
+                    <div id="horasField" style="display: none;">
+                        <label for="horasValidacao" class="form-label">Carga horária validada:</label>
+                        <input type="number" id="horasValidacao" class="form-control">
+                    </div>
+
+                    <!-- FEEDBACK ATUAL -->
+                    <button id="btnFeedbackAtual" class="btn btn-secondary mt-3 mb-3" style="display: none;">Feedback Atual</button>
+                    <div id="feedbackAtual" style="display: none;">
+                        <div class="accordion" id="accordionFeedbackAtual"></div>
+                    </div>
 
                     <!-- HISTÓRICO DE FEEDBACK -->
                     <button id="btnHistoricoFeedback" class="btn btn-secondary mt-3 mb-3" style="display: none;">Histórico Feedback</button>
                     <div id="feedbackHistorico" style="display: none;">
                         <div class="accordion" id="accordionFeedbackHistorico"></div>
+                    </div>
+
+                    <!-- HISTÓRICO DE ALTERAÇÕES -->
+                    <button id="btnHistoricoAlteracoes" class="btn btn-secondary mt-3 mb-3" style="display: none;">Histórico de Alterações</button>
+                    <div id="alteracoesHistorico" style="display: none;">
+                        <div class="accordion" id="accordionAlteracoesHistorico"></div>
                     </div>
                 </div>
                 <div class="modal-footer">

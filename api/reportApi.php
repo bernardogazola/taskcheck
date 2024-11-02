@@ -34,7 +34,7 @@ if ($method === "POST") {
             break;
         case 'validate':
             if ($_SESSION['tipo'] === "professor" && isset($_POST['id_relatorio'])) {
-                validarRelatorio($_POST['id_relatorio']);
+                validarRelatorio($_POST);
             } else {
                 json_return(["status" => "error", "message" => "Usuário não autorizado."]);
             }
@@ -76,6 +76,13 @@ if ($method === "POST") {
                 json_return(["status" => "error", "message" => "ID do relatório não fornecido."]);
             }
             break;
+        case 'get_alteracao_history':
+            if (isset($_GET['id_relatorio'])) {
+                obterHistoricoAlteracoes($_GET['id_relatorio']);
+            } else {
+                json_return(["status" => "error", "message" => "ID do relatório não fornecido."]);
+            }
+            break;
         case 'get_activity':
             if (isset($_GET['id_relatorio'])) {
                 obterAtividade($_GET['id_relatorio']);
@@ -88,6 +95,14 @@ if ($method === "POST") {
                 obterCertificado($_GET['id_relatorio']);
             } else {
                 json_return(["status" => "error", "message" => "ID do relatório não fornecido."]);
+            }
+            break;
+        case 'list_by_aluno':
+            if ($_SESSION['tipo'] === 'aluno') {
+                $categoriaId = isset($_GET['categoria']) ? intval($_GET['categoria']) : null;
+                listarRelatoriosPorAluno($id_usuario, $categoriaId);
+            } else {
+                json_return(["status" => "error", "message" => "Inválido."]);
             }
             break;
         case 'list_by_professor':
@@ -182,6 +197,36 @@ function listarAtividadesEnviadas($id_usuario) {
     }
 }
 
+function listarRelatoriosPorAluno($id_usuario, $categoriaId = null) {
+    $query = "
+        SELECT 
+            r.id,
+            r.nome,
+            c.nome AS categoria,
+            r.data_realizacao,
+            r.status
+        FROM relatorio_atividade r
+        LEFT JOIN categoria c ON r.id_categoria = c.id
+        WHERE r.id_aluno = $id_usuario
+    ";
+
+    // SE categoriaId FOI RECEBIDO -> FILTRAR
+    if ($categoriaId) {
+        $query .= " AND r.id_categoria = $categoriaId";
+    }
+
+    // ORDENAR DATA DE ENVIO - MAIS RECENTE
+    $query .= " ORDER BY r.data_envio DESC";
+
+    $atividades = consultar_dado($query);
+
+    if (is_array($atividades) && count($atividades) > 0) {
+        json_return($atividades);
+    } else {
+        json_return(["status" => "error", "message" => "Nenhuma atividade encontrada."]);
+    }
+}
+
 function listarRelatoriosPorProfessor($id_professor, $categoriaId = null) {
     $query = "
         SELECT 
@@ -236,6 +281,17 @@ function atualizarAtividade($dados) {
         $status = "Aguardando validacao";
     }
 
+    // HISTÓRICO DO RELATÓRIO
+    $queryHistorico = "INSERT INTO historico_relatorio_atividade 
+        (id_relatorio, nome_anterior, texto_reflexao_anterior, data_realizacao_anterior, status_anterior, certificado_anterior)
+        SELECT id, nome, texto_reflexao, data_realizacao, status, certificado 
+        FROM relatorio_atividade 
+        WHERE id = $id_relatorio";
+
+    if (!mysqli_query($connection, $queryHistorico)) {
+        json_return(["status" => "error", "message" => "Erro ao registrar o histórico de alterações: " . mysqli_error($connection)]);
+        return;
+    }
 
     $certificado = null;
     if (isset($_FILES['certificado']) && $_FILES['certificado']['error'] === UPLOAD_ERR_OK) {
@@ -296,6 +352,24 @@ function obterAtividade($id_relatorio) {
         json_return(["status" => "error", "message" => "Atividade não encontrada."]);
     }
 }
+
+function obterHistoricoAlteracoes($id_relatorio) {
+    $query = "
+        SELECT nome_anterior, texto_reflexao_anterior, data_realizacao_anterior, data_alteracao
+        FROM historico_relatorio_atividade
+        WHERE id_relatorio = $id_relatorio
+        ORDER BY data_alteracao DESC
+    ";
+
+    $historico = consultar_dado($query);
+
+    if (is_array($historico) && count($historico) > 0) {
+        json_return($historico);
+    } else {
+        json_return([]);
+    }
+}
+
 
 function obterFeedback($id_relatorio) {
     $query = "
@@ -387,8 +461,13 @@ function adicionarFeedbackHistorico($id_relatorio, $id_professor = null) {
     }
 }
 
-function validarRelatorio($id_relatorio) {
-    $atributos = "status = 'Valido'";
+function validarRelatorio($dados) {
+    global $connection;
+
+    $id_relatorio = mysqli_real_escape_string($connection, $dados['id_relatorio']);
+    $horas_validadas = mysqli_real_escape_string($connection, $dados['horas_validadas']);
+
+    $atributos = "status = 'Valido', horas_validadas = '$horas_validadas'";
     $condicao = "id = $id_relatorio";
 
     $resultado = atualizar_dado("relatorio_atividade", $atributos, $condicao);
