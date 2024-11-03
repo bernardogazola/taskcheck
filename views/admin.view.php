@@ -119,6 +119,17 @@
                             </select>
                         </div>
                     </div>
+                    <!-- CAMPOS PROFESSOR -->
+                    <div id="professor-fields">
+                        <div class="mb-3">
+                            <label for="curso-professor" class="form-label"
+                            >Curso</label
+                            >
+                            <select class="form-select" id="curso-professor">
+                                <!-- CURSOS-->
+                            </select>
+                        </div>
+                    </div>
                     <div class="modal-footer">
                         <button
                             type="button"

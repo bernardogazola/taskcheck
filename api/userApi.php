@@ -77,6 +77,10 @@ function adicionarUsuario($data) {
                 break;
             case 'professor':
                 inserir_dado("professor", "id_usuario", $id_usuario);
+                $id_curso_professor = intval($data['id_curso_professor']);
+                $colunas_professor = "id_professor, id_curso";
+                $valores_professor = "'$id_usuario', '$id_curso_professor'";
+                inserir_dado("professor_curso", $colunas_professor, $valores_professor);
                 break;
             default:
                 break;

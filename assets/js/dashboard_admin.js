@@ -7,14 +7,18 @@ document.addEventListener("DOMContentLoaded", function () {
     const tipoUsuario = this.value;
     const alunoFields = document.getElementById("aluno-fields");
     const coordenadorFields = document.getElementById("coordenador-fields");
+    const professorFields = document.getElementById("professor-fields");
 
     alunoFields.style.display = "none";
     coordenadorFields.style.display = "none";
+      professorFields.style.display = "none";
 
     if (tipoUsuario === "aluno") {
       alunoFields.style.display = "block";
     } else if (tipoUsuario === "coordenador") {
       coordenadorFields.style.display = "block";
+    } else if (tipoUsuario === "professor") {
+        professorFields.style.display = "block";
     }
   });
 
@@ -35,8 +39,8 @@ document.addEventListener("DOMContentLoaded", function () {
       const senha = document.getElementById("senha-usuario").value;
       const matricula = document.getElementById("matricula").value;
       const cursoAluno = document.getElementById("curso-aluno").value;
-      const cursoCoordenador =
-        document.getElementById("curso-coordenador").value;
+      const cursoCoordenador = document.getElementById("curso-coordenador").value;
+      const cursoProfessor = document.getElementById("curso-professor").value;
 
       const usuarioData = {
         tipo: tipo,
@@ -50,6 +54,8 @@ document.addEventListener("DOMContentLoaded", function () {
         usuarioData.id_curso = cursoAluno;
       } else if (tipo === "coordenador") {
         usuarioData.id_curso_responsavel = cursoCoordenador;
+      } else if (tipo === "professor") {
+          usuarioData.id_curso_professor = cursoProfessor;
       }
 
       fetch("../api/userApi.php?action=add", {
@@ -204,10 +210,11 @@ function carregarCursos() {
     .then((response) => response.json())
     .then((cursos) => {
       const cursoAlunoDropdown = document.getElementById("curso-aluno");
-      const cursoCoordenadorDropdown =
-        document.getElementById("curso-coordenador");
+      const cursoCoordenadorDropdown = document.getElementById("curso-coordenador");
+      const cursoProfessorDropdown = document.getElementById("curso-professor");
       cursoAlunoDropdown.innerHTML = "";
       cursoCoordenadorDropdown.innerHTML = "";
+      cursoProfessorDropdown.innerHTML = "";
 
       cursos.forEach((curso) => {
         const option = document.createElement("option");
@@ -215,6 +222,7 @@ function carregarCursos() {
         option.text = curso.nome;
         cursoAlunoDropdown.add(option.cloneNode(true));
         cursoCoordenadorDropdown.add(option);
+        cursoProfessorDropdown.add(option.cloneNode(true));
       });
     })
     .catch((error) => console.error("Erro ao carregar os cursos:", error));

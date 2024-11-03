@@ -207,6 +207,8 @@ CREATE TABLE IF NOT EXISTS `taskcheck`.`reversao_validacao` (
     REFERENCES `taskcheck`.`professor` (`id_usuario`)
 ) ENGINE = InnoDB;
 
+INSERT INTO `taskcheck`.`curso` (nome) VALUES ("Engenharia de Software");
+
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
