@@ -12,6 +12,13 @@ document.addEventListener("DOMContentLoaded", () => {
         addActivityForm: document.querySelector('#activity-form form'),
         editActivityForm: document.getElementById("edit-activity-form"),
         messageContainer: document.getElementById('response-message'),
+        viewProgressButton: document.getElementById("view-progress"),
+        progressCategoriesCard: document.getElementById("progress-categories"),
+        dateInput: document.getElementById("data"),
+        categoriaInput: document.getElementById("categoria"),
+        nomeInput: document.getElementById("nome"),
+        reflexaoInput: document.getElementById("reflexao"),
+        certificadoInput: document.getElementById("certificado"),
         logoutButton: document.getElementById("logout-btn")
     };
 
@@ -24,12 +31,13 @@ document.addEventListener("DOMContentLoaded", () => {
         elements.toggleSidebarButton.addEventListener("click", toggleSidebar);
         elements.addActivityButton.addEventListener("click", mostrarFormularioAtividade);
         elements.viewSentActivitiesButton.addEventListener("click", mostrarCardAtividadesEnviadas);
+        elements.viewProgressButton.addEventListener("click", mostrarProgressoCategorias);
 
         // FILTRAR RELATORIOS POR CATEGORIA PELO DROPDOWN
         elements.filtrarAtividadesDropdown.addEventListener("change", filtrarRelatoriosPorCategoria);
 
         // SUBMISSÃO DO FORMULÁRIO - ADICIONAR ATIVIDADE E EDICAO ATIVIDADE
-        elements.addActivityForm.addEventListener("submit", adicionarAtividade);
+        elements.addActivityForm.addEventListener("submit", validarFormulario);
         elements.editActivityForm.addEventListener("submit", salvarEdicaoAtividade);
 
         // LOGOUT
@@ -49,7 +57,9 @@ document.addEventListener("DOMContentLoaded", () => {
     function mostrarFormularioAtividade(event) {
         event.preventDefault();
         elements.activityForm.style.display = 'block';
+        elements.progressCategoriesCard.style.display = 'none';
         elements.sentActivitiesCard.style.display = 'none';
+        elements.dateInput.addEventListener("input", tratarDataRealizacao);
         carregarCategorias();
     }
 
@@ -57,9 +67,108 @@ document.addEventListener("DOMContentLoaded", () => {
     function mostrarCardAtividadesEnviadas(event) {
         event.preventDefault();
         elements.activityForm.style.display = 'none';
+        elements.progressCategoriesCard.style.display = 'none';
         elements.sentActivitiesCard.style.display = 'block';
         carregarAtividadesEnviadas();
         carregarCategorias();
+    }
+
+    // MOSTRAR CARDS DO PROGRESSO DE CADA CATEGORIA
+    async function mostrarProgressoCategorias(event) {
+        event.preventDefault();
+        elements.activityForm.style.display = 'none';
+        elements.sentActivitiesCard.style.display = 'none';
+        elements.progressCategoriesCard.style.display = 'block';
+        carregarProgressoCategorias();
+    }
+
+    // VALIDAR CAMPOS FORMULARIO ADD ATV - BOOTSTRAP
+    function validarFormulario(event) {
+        event.preventDefault();
+        let isValid = true;
+
+        // CAMPO DATA
+        if (!elements.dateInput.value.trim() || elements.dateInput.value.trim().length < 10) {
+            elements.dateInput.classList.add("is-invalid");
+            isValid = false;
+        } else {
+            elements.dateInput.classList.remove("is-invalid");
+            elements.dateInput.classList.add("is-valid");
+        }
+
+        // CAMPO CATEGORIA
+        if (elements.categoriaInput.value === "Selecionar categoria") {
+            elements.categoriaInput.classList.add("is-invalid");
+            isValid = false;
+        } else {
+            elements.categoriaInput.classList.remove("is-invalid");
+            elements.categoriaInput.classList.add("is-valid");
+        }
+
+        // CAMPO NOME
+        if (!elements.nomeInput.value.trim()) {
+            elements.nomeInput.classList.add("is-invalid");
+            isValid = false;
+        } else {
+            elements.nomeInput.classList.remove("is-invalid");
+            elements.nomeInput.classList.add("is-valid");
+        }
+
+        // CAMPO REFLEXÃO
+        if (!elements.reflexaoInput.value.trim()) {
+            elements.reflexaoInput.classList.add("is-invalid");
+            isValid = false;
+        } else {
+            elements.reflexaoInput.classList.remove("is-invalid");
+            elements.reflexaoInput.classList.add("is-valid");
+        }
+
+        // CAMPO CERTIFICADO
+        if (!elements.certificadoInput.files.length || elements.certificadoInput.files[0].type !== "application/pdf") {
+            elements.certificadoInput.classList.add("is-invalid");
+            isValid = false;
+        } else {
+            elements.certificadoInput.classList.remove("is-invalid");
+            elements.certificadoInput.classList.add("is-valid");
+        }
+
+        if (isValid) {
+            adicionarAtividade();
+        }
+    }
+
+    // VALIDACAO EXTRA CAMPO DATA
+    function tratarDataRealizacao(event) {
+        let input = event.target.value;
+
+        // REMOVER CARACTERE NAO NUMERICO
+        input = input.replace(/[^0-9]/g, '');
+
+        // FORMATAR DD/MM/AAAA - INSERIR "/" AUTOMATICO
+        if (input.length > 2 && input.length <= 4) {
+            input = input.slice(0, 2) + '/' + input.slice(2);
+        } else if (input.length > 4) {
+            input = input.slice(0, 2) + '/' + input.slice(2, 4) + '/' + input.slice(4, 8);
+        }
+
+        event.target.value = input;
+
+        // VERIFICAR SE A DATA É MAIOR QUE A DATA ATUAL
+        if (input.length === 10) {
+            const [day, month, year] = input.split('/').map(Number);
+            const inputDate = new Date(year, month - 1, day);
+            const currentDate = new Date();
+
+            if (inputDate > currentDate) {
+                elements.dateInput.classList.add("is-invalid");
+                elements.dateInput.classList.remove("is-valid");
+            } else {
+                elements.dateInput.classList.remove("is-invalid");
+                elements.dateInput.classList.add("is-valid");
+            }
+        } else {
+            elements.dateInput.classList.remove("is-invalid", "is-valid");
+        }
     }
 
     // FILTRAR RELATORIOS POR CATEGORIA
@@ -95,7 +204,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 option.text = categoria.nome;
                 categoriaDropdown.add(option.cloneNode(true));
                 categoriaEditDropdown.add(option);
-                elements.filtrarAtividadesDropdown.add(option);
+                elements.filtrarAtividadesDropdown.add(option.cloneNode(true));
             });
         } catch (error) {
             console.error("Erro ao carregar categorias:", error);
@@ -104,7 +213,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ADICIONAR ATIVIDADE - COLETAR E ENVIAR DADOS DO FORMULÁRIO
     async function adicionarAtividade(event) {
-        event.preventDefault();
+        if (event) {
+            event.preventDefault();
+        }
 
         const nome = document.getElementById('nome').value;
         const data_realizacao = document.getElementById('data').value;
@@ -141,6 +252,11 @@ document.addEventListener("DOMContentLoaded", () => {
             if (result.status === 'success') {
                 messageContainer.innerHTML = `<p class="text-success">${result.message}</p>`;
                 document.querySelector('#activity-form form').reset();
+                elements.dateInput.classList.remove("is-valid");
+                elements.categoriaInput.classList.remove("is-valid");
+                elements.nomeInput.classList.remove("is-valid");
+                elements.reflexaoInput.classList.remove("is-valid");
+                elements.certificadoInput.classList.remove("is-valid");
             } else {
                 messageContainer.innerHTML = `<p class="text-danger">${result.message}</p>`;
             }
@@ -343,6 +459,37 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         } catch (error) {
             console.error("Erro ao visualizar certificado:", error);
+        }
+    }
+
+    async function carregarProgressoCategorias() {
+        try {
+            const response = await fetch("../api/categoryApi.php?action=getProgress");
+            const categorias = await response.json();
+
+            const container = document.getElementById('progress-categories-container');
+            container.innerHTML = '';
+
+            categorias.forEach(categoria => {
+                const card = document.createElement('div');
+                card.classList.add('col-md-4', 'mb-4');
+                card.innerHTML = `
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">${categoria.nome}</h5>
+                            <p>Carga Horária: ${categoria.carga_horaria} horas</p>
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-striped" role="progressbar" style="width: ${Math.min(100, (categoria.horas_realizadas / categoria.carga_horaria) * 100)}%" aria-valuenow="${categoria.horas_realizadas}" aria-valuemin="0" aria-valuemax="${categoria.carga_horaria}">
+                                    ${categoria.horas_realizadas} horas
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        } catch (error) {
+            console.error("Erro ao carregar as categorias:", error);
         }
     }
 

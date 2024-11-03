@@ -16,24 +16,6 @@ if (!isset($_SESSION['id_usuario']) || $_SESSION['tipo'] != 'coordenador') {
     <div class="container mt-5" id="categories-card" style="display: none;">
         <div class="card p-4">
             <h2 class="card-title mb-4">Categorias</h2>
-
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <input type="text" class="form-control" id="pesquisarCategorias" placeholder="Pesquisar categorias">
-                </div>
-                <div class="col-md-3">
-                    <select class="form-select" id="filtrarCategorias">
-                        <option selected>Filtrar por carga horária</option>
-                        <option value="20">Até 20 horas</option>
-                        <option value="40">Até 40 horas</option>
-                        <option value="60">Até 60 horas</option>
-                    </select>
-                </div>
-                <div class="col-md-3 text-end">
-                    <button class="btn btn-primary" id="filtrar-btn">Filtrar</button>
-                </div>
-            </div>
-
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>

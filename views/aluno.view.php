@@ -11,38 +11,39 @@ if (!isset($_SESSION['id_usuario']) || $_SESSION['tipo'] != 'aluno') {
 <?php require 'partials/sidebar.php'; ?>
 <div class="content" id="content">
     <!-- ADICIONAR ATIVIDADE -->
-    <div class="container mt-5" id="activity-form" style="display: none;">
+    <div class="container mt-5" id="activity-form" style="display: none; max-width: 1200px">
         <div class="card p-4">
             <h3 class="card-title mb-4">Relatório de Atividade</h3>
-            <form>
+            <form novalidate>
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="data" class="form-label">Data de realização</label>
-                        <input type="text" class="form-control" id="data" placeholder="DD/MM/AAAA" pattern="\d{2}/\d{2}/\d{4}" />
+                        <input type="text" class="form-control" id="data" placeholder="DD/MM/AAAA" pattern="\d{2}/\d{2}/\d{4}" required />
+                        <div class="invalid-feedback">Por favor, insira uma data válida.</div>
                     </div>
                     <div class="col-md-6">
                         <label for="categoria" class="form-label">Categoria</label>
-                        <select id="categoria" class="form-select">
+                        <select id="categoria" class="form-select" required>
                             <option selected>Selecionar categoria</option>
                             <!-- CATEGORIAS -->
                         </select>
+                        <div class="invalid-feedback">Por favor, selecione uma categoria.</div>
                     </div>
                 </div>
                 <div class="mb-3">
-                    <label for="nome" class="form-label">Nome</label>
-                    <input type="text" class="form-control" id="nome" placeholder="Informe o nome" />
-                </div>
-                <div class="mb-3">
-                    <label for="descricao" class="form-label">Descrição</label>
-                    <textarea class="form-control" id="descricao" rows="3" placeholder="Informe a descrição"></textarea>
+                    <label for="nome" class="form-label">Nome da atividade</label>
+                    <input type="text" class="form-control" id="nome" placeholder="Informe o nome" required />
+                    <div class="invalid-feedback">Por favor, insira o nome da atividade.</div>
                 </div>
                 <div class="mb-3">
                     <label for="reflexao" class="form-label">Reflexão</label>
-                    <textarea class="form-control" id="reflexao" rows="3" placeholder="Informe a reflexão"></textarea>
+                    <textarea class="form-control" id="reflexao" rows="3" placeholder="Informe a reflexão" required></textarea>
+                    <div class="invalid-feedback">Por favor, insira a reflexão.</div>
                 </div>
                 <div class="mb-3">
                     <label for="certificado" class="form-label">Anexar certificado</label>
-                    <input type="file" class="form-control" id="certificado" />
+                    <input type="file" class="form-control" id="certificado" required />
+                    <div class="invalid-feedback">Por favor, anexe um arquivo PDF válido.</div>
                 </div>
                 <div id="response-message"></div>
                 <button type="submit" class="btn btn-primary">Enviar</button>
@@ -79,6 +80,14 @@ if (!isset($_SESSION['id_usuario']) || $_SESSION['tipo'] != 'aluno') {
                     </tbody>
                 </table>
             </div>
+        </div>
+    </div>
+
+    <!-- PROGRESSO POR CATEGORIA -->
+    <div class="container mt-5" id="progress-categories" style="display: none;">
+        <h2>Progresso por Categoria</h2>
+        <div class="row" id="progress-categories-container">
+            <!-- CARDS CATEGORIAS PROGRESSO -->
         </div>
     </div>
 

@@ -50,6 +50,9 @@ if ($method === "POST") {
                 json_return(["status" => "error", "message" => "ID da categoria não fornecido."]);
             }
             break;
+        case 'getProgress':
+            getProgress($id_usuario);
+            break;
         case 'delete':
             if (isset($_GET['id'])) {
                 excluirCategoria($_GET['id']);
@@ -227,5 +230,25 @@ function atualizarCategoria($dados) {
     } else {
         json_return(["status" => "error", "message" => "Erro ao atualizar categoria: " . $resultado['message']]);
     }
+}
+
+// PROGRESSO HORAS USUARIO ALUNO E CATEGORIA
+function getProgress($id_usuario) {
+    $query = "
+        SELECT 
+            c.id, 
+            c.nome, 
+            c.carga_horaria, 
+            IFNULL(SUM(r.horas_validadas), 0) AS horas_realizadas
+        FROM categoria c
+        LEFT JOIN relatorio_atividade r ON c.id = r.id_categoria AND r.id_aluno = $id_usuario AND r.status = 'Valido'
+        INNER JOIN aluno a ON a.id_curso = c.id_curso
+        WHERE a.id_usuario = $id_usuario
+        GROUP BY c.id, c.nome, c.carga_horaria
+    ";
+
+    $categorias = consultar_dado($query);
+    json_return($categorias);
+
 }
 ?>
