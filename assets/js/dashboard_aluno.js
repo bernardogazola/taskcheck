@@ -159,7 +159,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const inputDate = new Date(year, month - 1, day);
             const currentDate = new Date();
 
-            if (inputDate > currentDate) {
+            if (inputDate > currentDate || month > 12) {
                 elements.dateInput.classList.add("is-invalid");
                 elements.dateInput.classList.remove("is-valid");
             } else {
