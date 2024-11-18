@@ -300,12 +300,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // DATA DE REALIZAÇÃO
             const colunaDataRealizacao = document.createElement("td");
-            colunaDataRealizacao.textContent = atividade.data_realizacao;
+            const [year, month, day] = atividade.data_realizacao.split('-').map(String);
+            colunaDataRealizacao.textContent = `${day}/${month}/${year}`;
             linha.appendChild(colunaDataRealizacao);
 
             // STATUS
             const colunaStatus = document.createElement("td");
-            colunaStatus.textContent = atividade.status;
+            switch (atividade.status) {
+                case "Valido":
+                    colunaStatus.textContent = "Válido";
+                    break;
+                case "Invalido":
+                    colunaStatus.textContent = "Inválido";
+                    break;
+                case "Aguardando validacao":
+                    colunaStatus.textContent = "Aguardando Validação";
+                    break;
+                case "Recategorizacao":
+                    colunaStatus.textContent = "Recategorização";
+                    break;
+            }
             linha.appendChild(colunaStatus);
 
             // AÇÕES
@@ -324,7 +338,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // FEEDBACK
             if (["Invalido", "Recategorizacao"].includes(atividade.status)) {
-                const btnFeedback = criarBotao("Feedback", "btn-danger", () => visualizarFeedback(atividade.id));
+                const btnFeedback = criarBotao("Feedback", "btn-danger", () => visualizarFeedback(atividade.id), 'eye');
                 divAcoes.appendChild(btnFeedback);
             }
 

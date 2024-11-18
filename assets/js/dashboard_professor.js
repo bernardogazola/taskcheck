@@ -94,14 +94,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
         relatorios.forEach((relatorio) => {
             const linha = document.createElement("tr");
+            let statusFormat;
+            switch (relatorio.status) {
+                case "Valido":
+                    statusFormat = "Válido";
+                    break;
+                case "Invalido":
+                    statusFormat = "Inválido";
+                    break;
+                case "Aguardando validacao":
+                    statusFormat = "Aguardando Validação";
+                    break;
+                case "Recategorizacao":
+                    statusFormat = "Recategorização";
+                    break;
+            }
 
             linha.innerHTML = `
                 <td>${relatorio.atividade}</td>
                 <td>${relatorio.curso}</td>
                 <td>${relatorio.categoria}</td>
                 <td>${relatorio.aluno}</td>
-                <td>${relatorio.status}</td>
+                <td>${statusFormat}</td>
             `;
+
 
             const colunaAcoes = document.createElement("td");
             const divAcoes = document.createElement("div");
@@ -183,8 +199,14 @@ document.addEventListener("DOMContentLoaded", () => {
             const relatorio = await response.json();
 
             if (relatorio.status !== "error") {
-                document.getElementById("detalheDataRealizacao").textContent = relatorio.data_realizacao;
-                document.getElementById("detalheDataEnvio").textContent = relatorio.data_envio;
+                let dataReaFormat;
+                const [year, month, day] = relatorio.data_realizacao.split('-').map(String);
+                dataReaFormat = `${day}/${month}/${year}`;
+                let dataEnvFormat;
+                const [yearE, monthE, dayE] = relatorio.data_envio.split('-').map(String);
+                dataEnvFormat = `${dayE}/${monthE}/${yearE}`;
+                document.getElementById("detalheDataRealizacao").textContent = dataReaFormat;
+                document.getElementById("detalheDataEnvio").textContent = dataEnvFormat;
                 document.getElementById("detalheCategoria").textContent = await obterCategoria(relatorio.id_categoria);
                 document.getElementById("detalheNome").textContent = relatorio.nome;
                 document.getElementById("detalheReflexao").textContent = relatorio.texto_reflexao;
@@ -399,11 +421,14 @@ document.addEventListener("DOMContentLoaded", () => {
             if (historicoFeedback.length > 0) {
 
                 historicoFeedback.forEach((feedback, index) => {
+                    let dataEnvFormat;
+                    const [yearE, monthE, dayE] = feedback.data_envio.split(' ')[0].split('-');
+                    dataEnvFormat = `${dayE}/${monthE}/${yearE}`;
                     const feedbackItem = `
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="heading${index}">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${index}" aria-expanded="false" aria-controls="collapse${index}">
-                                Versão ${feedback.versao} - ${feedback.data_envio}
+                                Versão ${feedback.versao} - ${dataEnvFormat}
                             </button>
                         </h2>
                         <div id="collapse${index}" class="accordion-collapse collapse" aria-labelledby="heading${index}" data-bs-parent="#accordionFeedbackHistorico">
@@ -434,11 +459,19 @@ document.addEventListener("DOMContentLoaded", () => {
             if (historico.length > 0) {
                 //document.getElementById("alteracoesHistorico").style.display = "block";
                 historico.forEach((alteracao, index) => {
+                    let dataAltFormat;
+                    let timeAltFormat;
+                    const [yearE, monthE, dayE] = alteracao.data_alteracao.split(' ')[0].split('-');
+                    dataAltFormat = `${dayE}/${monthE}/${yearE}`;
+                    timeAltFormat = alteracao.data_alteracao.split(' ')[1]
+                    let dataReaFormat;
+                    const [year, month, day] = alteracao.data_realizacao_anterior.split('-').map(String);
+                    dataReaFormat = `${day}/${month}/${year}`;
                     const alteracaoItem = `
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="heading${index}">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${index}" aria-expanded="false" aria-controls="collapse${index}">
-                                Alteração em ${alteracao.data_alteracao}
+                                Alteração em ${dataAltFormat} ${timeAltFormat}
                             </button>
                         </h2>
                         <div id="collapse${index}" class="accordion-collapse collapse" aria-labelledby="heading${index}" data-bs-parent="#accordionAlteracoesHistorico">
@@ -447,7 +480,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <strong>Relatório anterior:</strong><br>
                                 <strong>Nome:</strong> ${alteracao.nome_anterior}<br>
                                 <strong>Reflexão:</strong> ${alteracao.texto_reflexao_anterior}<br>
-                                <strong>Data de Realização:</strong> ${alteracao.data_realizacao_anterior}
+                                <strong>Data de Realização:</strong> ${dataReaFormat}
                             </div>
                         </div>
                     </div>
